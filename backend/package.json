@@ -17,6 +17,7 @@
   },
   "type": "commonjs",
   "dependencies": {
+    "@vercel/blob": "^1.1.1",
     "@prisma/client": "^6.18.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
