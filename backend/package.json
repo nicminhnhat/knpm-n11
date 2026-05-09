@@ -1,0 +1,32 @@
+{
+  "name": "knpm-n11-backend",
+  "version": "1.0.0",
+  "description": "Backend API for he thong ho tro tim tro sinh vien tai Hue",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "seed": "node scripts/seed.js",
+    "seed:admin": "node scripts/seed-admin.js",
+    "build": "prisma generate",
+    "db:push": "prisma db push",
+    "render:build": "npm run prisma:generate && npm run prisma:push",
+    "postinstall": "prisma generate"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/client": "^6.18.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "prisma": "^6.18.0",
+    "multer": "^2.0.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
