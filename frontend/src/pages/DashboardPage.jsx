@@ -122,6 +122,10 @@ function useActionDialog() {
     setDialog({ type: "input", title, message, defaultValue, placeholder, confirmLabel, cancelLabel: "Hủy", onSubmit, multiline, required });
   }
 
+  function requestSelect({ title, message, defaultValue = "", options = [], confirmLabel = "Xác nhận", onSubmit }) {
+    setDialog({ type: "select", title, message, defaultValue, options, confirmLabel, cancelLabel: "Hủy", onSubmit, required: true });
+  }
+
   async function run(callback, successMessage, onSuccess) {
     try {
       await callback();
@@ -147,7 +151,7 @@ function useActionDialog() {
   }
 
   const modal = <FeedbackModal dialog={dialog} onClose={closeDialog} onConfirm={confirmAction} onSubmitText={submitText} />;
-  return { confirm, modal, requestText, run, warn };
+  return { confirm, modal, requestText, requestSelect, run, warn };
 }
 
 function isBlank(value) {
@@ -408,11 +412,25 @@ function LandlordSection() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.run(
-                    () => authRequest(`/api/landlord/rooms/${room.id}/status`, { method: "PATCH", body: JSON.stringify({ status: room.status === "AVAILABLE" ? "RENTED" : "AVAILABLE" }) }),
-                    "Trạng thái phòng đã được cập nhật.",
-                    load
-                  )}>Đổi trạng thái</button>
+                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.requestSelect({
+                    title: "Thay đổi trạng thái phòng",
+                    message: "Vui lòng chọn trạng thái mới cho phòng trọ này:",
+                    defaultValue: room.status,
+                    options: [
+                      { label: "Còn phòng", value: "AVAILABLE" },
+                      { label: "Đã thuê", value: "RENTED" },
+                      { label: "Tạm ẩn", value: "HIDDEN" }
+                    ],
+                    onSubmit: (newStatus) => {
+                      if (newStatus !== room.status) {
+                        action.run(
+                          () => authRequest(`/api/landlord/rooms/${room.id}/status`, { method: "PATCH", body: JSON.stringify({ status: newStatus }) }),
+                          "Trạng thái phòng đã được cập nhật.",
+                          load
+                        );
+                      }
+                    }
+                  })}>Đổi trạng thái</button>
                   <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.confirm(
                     "Xóa phòng trọ",
                     `Bạn có chắc chắn muốn xóa phòng “${room.title}”?`,

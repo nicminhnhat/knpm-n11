@@ -26,6 +26,11 @@ function FeedbackModal({ dialog, onClose, onConfirm, onSubmitText }) {
       badge: "bg-orange-100 text-[color:var(--brand)]",
       icon: "i",
       title: dialog.title || "Nhập thông tin"
+    },
+    select: {
+      badge: "bg-orange-100 text-[color:var(--brand)]",
+      icon: "i",
+      title: dialog.title || "Lựa chọn"
     }
   }[dialog.type || "success"];
 
@@ -50,9 +55,13 @@ function FeedbackModal({ dialog, onClose, onConfirm, onSubmitText }) {
           </div>
         </div>
 
-        {dialog.type === "input" ? (
+        {dialog.type === "input" || dialog.type === "select" ? (
           <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
-            {dialog.multiline ? (
+            {dialog.type === "select" ? (
+              <select className="input-shell" name="value" defaultValue={dialog.defaultValue || ""}>
+                {dialog.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+            ) : dialog.multiline ? (
               <textarea
                 autoFocus
                 className="input-shell min-h-28"
