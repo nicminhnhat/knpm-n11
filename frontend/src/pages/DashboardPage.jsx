@@ -243,7 +243,7 @@ function StudentSection() {
     setReports(rep.reports || []);
   }
 
-  useEffect(() => { load().catch(() => {}); }, []);
+  useEffect(() => { load().catch(() => { }); }, []);
 
   return (
     <Card title="Khu vực sinh viên">
@@ -301,15 +301,15 @@ function LandlordSection() {
   const [verifyForm, setVerifyForm] = useState({ fullName: "", phone: "", address: "", documentType: "CCCD", documentNumber: "", documentUrl: "", note: "" });
 
   async function load() {
-    const [v, r, p] = await Promise.all([authRequest("/api/verification/me"), authRequest("/api/landlord/rooms"), authRequest("/api/landlord/posts")]);
+    const [r, p] = await Promise.all([authRequest("/api/landlord/rooms"), authRequest("/api/landlord/posts")]);
     const roomList = r.rooms || [];
-    setVerification(v.request || v.requests?.[0] || null);
+    console.log(roomList);
     setRooms(roomList);
     setPosts(p.posts || []);
     setPostForm((cur) => ({ ...cur, roomId: cur.roomId || roomList[0]?.id || "" }));
   }
 
-  useEffect(() => { load().catch(() => {}); }, []);
+  useEffect(() => { load().catch(() => { }); }, []);
 
   async function submitRoom(event) {
     event.preventDefault();
@@ -500,7 +500,7 @@ function MessagesSection() {
     setMessages(response.messages || []);
   }
 
-  useEffect(() => { loadThreads().catch(() => {}); }, []);
+  useEffect(() => { loadThreads().catch(() => { }); }, []);
 
   return (
     <Card title="Tin nhắn">
@@ -563,7 +563,7 @@ function AdminSection() {
     setReports(r.reports || []);
   }
 
-  useEffect(() => { load().catch(() => {}); }, []);
+  useEffect(() => { load().catch(() => { }); }, []);
 
   function approvePost(post) {
     action.confirm(
@@ -799,7 +799,7 @@ function AdminSection() {
 
 function NotificationsSection() {
   const [notifications, setNotifications] = useState([]);
-  useEffect(() => { authRequest("/api/notifications").then((r) => setNotifications(r.notifications || [])).catch(() => {}); }, []);
+  useEffect(() => { authRequest("/api/notifications").then((r) => setNotifications(r.notifications || [])).catch(() => { }); }, []);
   return <Card title="Thông báo"><div className="grid gap-3">{notifications.length ? notifications.map((n) => <div key={n.id} className="panel-soft p-4"><p className="font-bold">{n.title}</p><p className="mt-1 text-sm text-[color:var(--muted)]">{n.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có thông báo.</p>}</div></Card>;
 }
 
