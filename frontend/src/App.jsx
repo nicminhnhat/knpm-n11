@@ -20,6 +20,7 @@ function App() {
         <Route path="rooms" element={<RoomsPage />} />
         <Route path="rooms/:id" element={<RoomDetailPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="dashboard/:section" element={<DashboardPage />} />
         <Route path="rent" element={<RentPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="login" element={<LoginPage />} />

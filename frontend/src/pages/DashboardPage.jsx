@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import FeedbackModal from "../components/FeedbackModal.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -293,7 +293,7 @@ function StudentSection() {
   );
 }
 
-function LandlordSection() {
+function LandlordSection({ view = "all" } = {}) {
   const action = useActionDialog();
   const emptyRoomForm = { title: "", description: "", address: "", district: "TP Huế", price: "", area: "", type: "SINGLE", amenities: "Wifi, chỗ để xe", contactPhone: "", imageUrl: "" };
   const emptyPostForm = { roomId: "", title: "", description: "", imageUrl: "" };
@@ -359,10 +359,13 @@ function LandlordSection() {
     );
   }
 
+  const showAll = view === "all";
+
   return (
     <div className="space-y-8">
       {action.modal}
-      <Card title="Xác minh chủ trọ">
+      {(showAll || view === "verification") ? (
+        <Card title="Xác minh chủ trọ">
         {verification ? <div className="mb-5 panel-soft p-4"><div className="flex items-center justify-between"><strong>Hồ sơ gần nhất</strong><Badge>{statusLabel(verification.status)}</Badge></div>{verification.rejectionReason ? <p className="mt-2 text-sm text-red-700">Lý do từ chối: {verification.rejectionReason}</p> : null}</div> : null}
         <form className="grid gap-4 lg:grid-cols-2" onSubmit={async (event) => {
           event.preventDefault();
@@ -384,9 +387,11 @@ function LandlordSection() {
           <Field label="Ghi chú"><TextInput value={verifyForm.note} onChange={(e) => setVerifyForm((v) => ({ ...v, note: e.target.value }))} /></Field>
           <button className="button-primary w-fit lg:col-span-2" type="submit">Gửi xác minh</button>
         </form>
-      </Card>
+        </Card>
+      ) : null}
 
-      <Card title="Quản lý phòng trọ">
+      {(showAll || view === "rooms") ? (
+        <Card title="Quản lý phòng trọ">
         <form className="grid gap-4 lg:grid-cols-3" onSubmit={submitRoom}>
           <Field label="Tiêu đề phòng"><TextInput value={roomForm.title} onChange={(e) => setRoomForm((v) => ({ ...v, title: e.target.value }))} /></Field>
           <Field label="Giá thuê"><TextInput type="number" value={roomForm.price} onChange={(e) => setRoomForm((v) => ({ ...v, price: e.target.value }))} /></Field>
@@ -446,9 +451,11 @@ function LandlordSection() {
             </div>
           ))}
         </div>
-      </Card>
+        </Card>
+      ) : null}
 
-      <Card title="Quản lý bài đăng">
+      {(showAll || view === "posts") ? (
+        <Card title="Quản lý bài đăng">
         <form className="grid gap-4 lg:grid-cols-2" onSubmit={submitPost}>
           <Field label="Chọn phòng trọ"><Select value={postForm.roomId} onChange={(e) => setPostForm((v) => ({ ...v, roomId: e.target.value }))}>{rooms.map((room) => <option key={room.id} value={room.id}>{room.title}</option>)}</Select></Field>
           <Field label="Tiêu đề bài đăng"><TextInput value={postForm.title} onChange={(e) => setPostForm((v) => ({ ...v, title: e.target.value }))} /></Field>
@@ -496,7 +503,8 @@ function LandlordSection() {
             </div>
           ))}
         </div>
-      </Card>
+        </Card>
+      ) : null}
     </div>
   );
 }
@@ -558,7 +566,7 @@ function MessagesSection() {
   );
 }
 
-function AdminSection() {
+function AdminSection({ view = "all" } = {}) {
   const action = useActionDialog();
   const [dashboard, setDashboard] = useState(null);
   const [users, setUsers] = useState([]);
@@ -718,10 +726,13 @@ function AdminSection() {
     });
   }
 
+  const showAll = view === "all";
+
   return (
     <div className="space-y-8">
       {action.modal}
-      <Card title="Bảng điều khiển quản trị">
+      {(showAll || view === "dashboard") ? (
+        <Card title="Bảng điều khiển quản trị">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Object.entries(dashboard || {}).filter(([, v]) => typeof v !== "object").map(([k, v]) => (
             <div key={k} className="metric-card">
@@ -730,9 +741,11 @@ function AdminSection() {
             </div>
           ))}
         </div>
-      </Card>
+        </Card>
+      ) : null}
 
-      <Card title="Quản lý tài khoản người dùng">
+      {(showAll || view === "users") ? (
+        <Card title="Quản lý tài khoản người dùng">
         <div className="grid gap-4">
           {users.map((u) => (
             <div key={u.id} className="panel-soft p-4">
@@ -749,9 +762,11 @@ function AdminSection() {
             </div>
           ))}
         </div>
-      </Card>
+        </Card>
+      ) : null}
 
-      <Card title="Kiểm duyệt bài đăng">
+      {(showAll || view === "posts") ? (
+        <Card title="Kiểm duyệt bài đăng">
         <div className="grid gap-4">
           {posts.map((post) => (
             <div key={post.id} className="panel-soft p-4">
@@ -768,9 +783,11 @@ function AdminSection() {
             </div>
           ))}
         </div>
-      </Card>
+        </Card>
+      ) : null}
 
-      <Card title="Xác minh tài khoản chủ trọ">
+      {(showAll || view === "verifications") ? (
+        <Card title="Xác minh tài khoản chủ trọ">
         <div className="grid gap-4">
           {verifications.map((v) => (
             <div key={v.id} className="panel-soft p-4">
@@ -789,9 +806,11 @@ function AdminSection() {
             </div>
           ))}
         </div>
-      </Card>
+        </Card>
+      ) : null}
 
-      <Card title="Xử lý báo cáo vi phạm">
+      {(showAll || view === "reports") ? (
+        <Card title="Xử lý báo cáo vi phạm">
         <div className="grid gap-4">
           {reports.map((report) => (
             <div key={report.id} className="panel-soft p-4">
@@ -810,7 +829,8 @@ function AdminSection() {
             </div>
           ))}
         </div>
-      </Card>
+        </Card>
+      ) : null}
     </div>
   );
 }
@@ -821,7 +841,138 @@ function NotificationsSection() {
   return <Card title="Thông báo"><div className="grid gap-3">{notifications.length ? notifications.map((n) => <div key={n.id} className="panel-soft p-4"><p className="font-bold">{n.title}</p><p className="mt-1 text-sm text-[color:var(--muted)]">{n.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có thông báo.</p>}</div></Card>;
 }
 
+function getDashboardMenuItems(role) {
+  if (role === "LANDLORD") {
+    return [
+      { title: "Xác minh", description: "Gửi và theo dõi hồ sơ xác minh chủ trọ.", to: "/dashboard/verification" },
+      { title: "Quản lý trọ", description: "Thêm phòng, xem danh sách phòng và cập nhật trạng thái.", to: "/dashboard/rooms" },
+      { title: "Quản lý bài đăng", description: "Tạo bài đăng, ẩn/hiện và xóa bài đăng cho thuê.", to: "/dashboard/posts" },
+      { title: "Nhắn tin", description: "Trao đổi với sinh viên hoặc người dùng khác.", to: "/dashboard/messages" }
+    ];
+  }
+
+  if (role === "ADMIN") {
+    return [
+      { title: "Xác minh", description: "Duyệt hoặc từ chối hồ sơ xác minh chủ trọ.", to: "/dashboard/verification" },
+      { title: "Quản lý bài đăng", description: "Kiểm duyệt, duyệt, từ chối hoặc ẩn bài đăng.", to: "/dashboard/posts" },
+      { title: "Quản lý tài khoản", description: "Theo dõi, khóa hoặc mở khóa tài khoản người dùng.", to: "/dashboard/users" },
+      { title: "Báo cáo vi phạm", description: "Xử lý báo cáo từ người dùng trong hệ thống.", to: "/dashboard/reports" }
+    ];
+  }
+
+  return [
+    { title: "Nhắn tin", description: "Theo dõi và phản hồi các cuộc trò chuyện.", to: "/dashboard/messages" }
+  ];
+}
+
+function getAllowedSections(role) {
+  if (role === "LANDLORD") return ["verification", "rooms", "posts", "messages"];
+  if (role === "ADMIN") return ["verification", "posts", "users", "reports"];
+  return ["messages"];
+}
+
+function getSectionTitle(section, role) {
+  if (!section) return "Bảng điều khiển";
+
+  if (role === "ADMIN") {
+    const adminTitles = {
+      verification: "Xác minh tài khoản chủ trọ",
+      posts: "Kiểm duyệt bài đăng",
+      users: "Quản lý tài khoản",
+      reports: "Báo cáo vi phạm"
+    };
+    return adminTitles[section] || "Danh mục quản lý";
+  }
+
+  const titles = {
+    verification: "Xác minh chủ trọ",
+    rooms: "Quản lý trọ",
+    posts: "Quản lý bài đăng",
+    messages: "Nhắn tin"
+  };
+  return titles[section] || "Danh mục quản lý";
+}
+
+function DashboardOverview({ refreshUser, user }) {
+  const items = getDashboardMenuItems(user.role);
+
+  return (
+    <section className="section-space pt-4">
+      <div className="shell space-y-8">
+        <Card
+          title="Danh mục quản lý"
+          description="Chọn đúng chức năng cần dùng để thao tác trong từng khu vực riêng, giúp dashboard gọn gàng và dễ quản lý hơn."
+        >
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {items.map((item) => (
+              <Link
+                className="group rounded-[1.5rem] border border-[color:var(--line)] bg-white p-5 shadow-[0_14px_34px_rgba(22,50,74,0.06)] transition duration-200 hover:-translate-y-1 hover:border-[color:var(--brand)] hover:shadow-[0_20px_44px_rgba(213,91,54,0.14)]"
+                key={item.to}
+                to={item.to}
+              >
+                <p className="text-lg font-extrabold text-[color:var(--ink)] transition group-hover:text-[color:var(--brand)]">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{item.description}</p>
+                <span className="mt-4 inline-flex text-sm font-bold text-[color:var(--brand)]">Mở chức năng →</span>
+              </Link>
+            ))}
+          </div>
+        </Card>
+
+        <ProfileSection user={user} refreshUser={refreshUser} />
+        <NotificationsSection />
+        {user.role === "STUDENT" ? <StudentSection /> : null}
+      </div>
+    </section>
+  );
+}
+
+function DashboardContent({ refreshUser, section, user }) {
+  if (!section) {
+    return <DashboardOverview user={user} refreshUser={refreshUser} />;
+  }
+
+  if (section === "messages") {
+    return (
+      <section className="section-space pt-4">
+        <div className="shell space-y-8">
+          <MessagesSection />
+        </div>
+      </section>
+    );
+  }
+
+  if (user.role === "LANDLORD") {
+    return (
+      <section className="section-space pt-4">
+        <div className="shell space-y-8">
+          <LandlordSection view={section} />
+        </div>
+      </section>
+    );
+  }
+
+  if (user.role === "ADMIN") {
+    const adminViewMap = {
+      verification: "verifications",
+      posts: "posts",
+      users: "users",
+      reports: "reports"
+    };
+
+    return (
+      <section className="section-space pt-4">
+        <div className="shell space-y-8">
+          <AdminSection view={adminViewMap[section]} />
+        </div>
+      </section>
+    );
+  }
+
+  return <Navigate replace to="/dashboard" />;
+}
+
 function DashboardPage() {
+  const { section } = useParams();
   const { isAuthenticated, isLoading, refreshUser, user } = useAuth();
 
   const stats = useMemo(() => [
@@ -833,27 +984,27 @@ function DashboardPage() {
   if (!isLoading && !isAuthenticated) return <Navigate replace to="/login" />;
   if (isLoading || !user) return <div className="section-space shell">Đang tải tài khoản...</div>;
 
+  const allowedSections = getAllowedSections(user.role);
+  if (section && !allowedSections.includes(section)) {
+    return <Navigate replace to="/dashboard" />;
+  }
+
+  const sectionTitle = getSectionTitle(section, user.role);
+
   return (
     <>
       <PageIntro
-        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">{roleLabel(user.role)}</p><p className="mt-2">Quản lý thông tin và thao tác nghiệp vụ theo quyền tài khoản.</p></div>}
-        description="Khu vực quản lý thông tin cá nhân, phòng trọ, bài đăng, tin nhắn, xác minh, báo cáo và tài khoản người dùng."
-        eyebrow="Bảng điều khiển"
+        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">{roleLabel(user.role)}</p><p className="mt-2">Các chức năng quản lý được tách riêng theo từng danh mục để thao tác dễ hơn.</p></div>}
+        description={section ? "Khu vực thao tác riêng, chỉ hiển thị đúng chức năng đang chọn để tránh rối giao diện." : "Trang tổng quan tài khoản. Chọn một mục trong danh mục quản lý để mở chức năng cần dùng."}
+        eyebrow={section ? "Danh mục quản lý" : "Bảng điều khiển"}
         stats={stats}
-        title={`Xin chào, ${user.fullName}`}
+        title={section ? sectionTitle : `Xin chào, ${user.fullName}`}
       />
 
-      <section className="section-space pt-4">
-        <div className="shell space-y-8">
-          <ProfileSection user={user} refreshUser={refreshUser} />
-          <NotificationsSection />
-          {user.role === "STUDENT" ? <><StudentSection /><MessagesSection /></> : null}
-          {user.role === "LANDLORD" ? <><LandlordSection /><MessagesSection /></> : null}
-          {user.role === "ADMIN" ? <AdminSection /> : null}
-        </div>
-      </section>
+      <DashboardContent section={section} user={user} refreshUser={refreshUser} />
     </>
   );
 }
+
 
 export default DashboardPage;

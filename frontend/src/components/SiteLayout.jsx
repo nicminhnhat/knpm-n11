@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import logoImage from "../assets/logo.png";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -26,6 +26,31 @@ function getRoleLabel(role) {
   return "Sinh viên";
 }
 
+
+function getManagementItems(role) {
+  if (role === "LANDLORD") {
+    return [
+      { label: "Xác minh", to: "/dashboard/verification" },
+      { label: "Quản lý trọ", to: "/dashboard/rooms" },
+      { label: "Quản lý bài đăng", to: "/dashboard/posts" },
+      { label: "Nhắn tin", to: "/dashboard/messages" }
+    ];
+  }
+
+  if (role === "ADMIN") {
+    return [
+      { label: "Xác minh", to: "/dashboard/verification" },
+      { label: "Quản lý bài đăng", to: "/dashboard/posts" },
+      { label: "Quản lý tài khoản", to: "/dashboard/users" },
+      { label: "Báo cáo vi phạm", to: "/dashboard/reports" }
+    ];
+  }
+
+  return [
+    { label: "Nhắn tin", to: "/dashboard/messages" }
+  ];
+}
+
 function GuestLinks({ onNavigate }) {
   return (
     <>
@@ -43,11 +68,74 @@ function GuestLinks({ onNavigate }) {
 }
 
 function UserLinks({ onLogout, user }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const location = useLocation();
+  const managementItems = getManagementItems(user.role);
+  const dashboardActive = location.pathname.startsWith("/dashboard");
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <>
-      <NavLink className={navClass} to="/dashboard">
-        Quản lý
-      </NavLink>
+      <div className="relative" ref={menuRef}>
+        <button
+          aria-expanded={menuOpen}
+          aria-haspopup="menu"
+          className={[
+            "relative inline-flex items-center gap-2 transition-colors duration-200 hover:text-[color:var(--brand)] after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:rounded-full after:bg-[color:var(--brand)] after:transition-transform after:duration-200",
+            dashboardActive
+              ? "text-[color:var(--brand)] after:scale-x-100"
+              : "text-[color:var(--ink)] hover:after:scale-x-100"
+          ].join(" ")}
+          onClick={() => setMenuOpen((value) => !value)}
+          type="button"
+        >
+          Danh mục quản lý
+          <span className={`text-xs transition-transform ${menuOpen ? "rotate-180" : ""}`}>▾</span>
+        </button>
+
+        {menuOpen ? (
+          <div className="absolute left-1/2 top-10 z-50 w-64 -translate-x-1/2 rounded-[1.5rem] border border-[color:var(--line)] bg-white p-2 text-sm shadow-[0_22px_55px_rgba(22,50,74,0.14)]" role="menu">
+            <NavLink
+              className="block rounded-2xl px-4 py-3 font-bold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
+              onClick={() => setMenuOpen(false)}
+              to="/dashboard"
+            >
+              Tổng quan
+            </NavLink>
+            {managementItems.map((item) => (
+              <NavLink
+                key={item.to}
+                className={({ isActive }) => [
+                  "block rounded-2xl px-4 py-3 font-bold transition",
+                  isActive
+                    ? "bg-[color:var(--accent-soft)] text-[color:var(--brand)]"
+                    : "text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
+                ].join(" ")}
+                onClick={() => setMenuOpen(false)}
+                to={item.to}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
       <div className="rounded-full bg-white px-4 py-2 text-sm text-[color:var(--ink)] shadow-[0_10px_24px_rgba(22,50,74,0.06)]">
         <span className="font-bold">{user.fullName}</span>
         <span className="ml-2 text-[color:var(--muted)]">({getRoleLabel(user.role)})</span>
@@ -59,13 +147,14 @@ function UserLinks({ onLogout, user }) {
   );
 }
 
+
 function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
 
   return (
     <header className="shell z-40 pt-4 sm:pt-5">
-      <div className="panel overflow-hidden bg-[color:var(--surface-strong)]/92 backdrop-blur">
+      <div className="panel overflow-visible bg-[color:var(--surface-strong)]/92 backdrop-blur">
         <div className="flex items-center justify-between gap-4 border-b border-[color:var(--line)] px-5 py-4 sm:px-8">
           <NavLink className="flex items-center gap-4" to="/">
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-[color:var(--surface-soft)] p-2">
@@ -120,9 +209,29 @@ function SiteHeader() {
                     <div className="font-bold">{user.fullName}</div>
                     <div className="mt-1 text-sm text-[color:var(--muted)]">{getRoleLabel(user.role)}</div>
                   </div>
-                  <NavLink className={navClass} onClick={() => setMobileOpen(false)} to="/dashboard">
-                    Quản lý
-                  </NavLink>
+                  <details className="rounded-[1.25rem] border border-[color:var(--line)] bg-white p-3 shadow-[0_10px_24px_rgba(22,50,74,0.06)]">
+                    <summary className="cursor-pointer list-none font-bold text-[color:var(--ink)]">Danh mục quản lý</summary>
+                    <div className="mt-3 grid gap-2">
+                      <NavLink className="rounded-2xl px-3 py-2 font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]" onClick={() => setMobileOpen(false)} to="/dashboard">
+                        Tổng quan
+                      </NavLink>
+                      {getManagementItems(user.role).map((item) => (
+                        <NavLink
+                          key={item.to}
+                          className={({ isActive }) => [
+                            "rounded-2xl px-3 py-2 font-semibold transition",
+                            isActive
+                              ? "bg-[color:var(--accent-soft)] text-[color:var(--brand)]"
+                              : "text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
+                          ].join(" ")}
+                          onClick={() => setMobileOpen(false)}
+                          to={item.to}
+                        >
+                          {item.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  </details>
                   <button
                     className="button-secondary justify-center"
                     onClick={() => {
