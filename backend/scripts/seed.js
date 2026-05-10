@@ -3,8 +3,8 @@ require("dotenv").config();
 const prisma = require("../lib/prisma");
 const { hashPassword } = require("../lib/auth");
 
-async function upsertUser({ email, fullName, role, phone, verificationStatus = "VERIFIED" }) {
-  const passwordHash = await hashPassword(process.env.SEED_PASSWORD || "123456");
+async function upsertUser({ email, fullName, role, phone, verificationStatus = "VERIFIED", password }) {
+  const passwordHash = await hashPassword(password || process.env.SEED_PASSWORD || "123456");
   return prisma.user.upsert({
     where: { email },
     update: { fullName, role, phone, passwordHash, status: "ACTIVE", lockReason: null, verificationStatus },
@@ -35,7 +35,11 @@ async function createRoomAndPost(landlord, roomData, postData) {
 }
 
 async function main() {
-  const admin = await upsertUser({ email: process.env.ADMIN_EMAIL || "admin@example.com", fullName: process.env.ADMIN_NAME || "System Admin", role: "ADMIN" });
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@knpm.local";
+  const adminPassword = process.env.ADMIN_PASSWORD || "Admin123456";
+  const adminName = process.env.ADMIN_NAME || "Quan tri vien";
+
+  const admin = await upsertUser({ email: adminEmail, fullName: adminName, role: "ADMIN", password: adminPassword });
   const student = await upsertUser({ email: process.env.SEED_STUDENT_EMAIL || "student@knpm.local", fullName: "Sinh viên demo", role: "STUDENT", phone: "0900000001" });
   const landlord = await upsertUser({ email: process.env.SEED_LANDLORD_EMAIL || "landlord@knpm.local", fullName: "Chủ trọ demo", role: "LANDLORD", phone: "0900000002", verificationStatus: "VERIFIED" });
 
