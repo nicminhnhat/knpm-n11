@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import FeedbackModal from "../components/FeedbackModal.jsx";
 import PageIntro from "../components/PageIntro.jsx";
@@ -833,18 +833,26 @@ function AdminSection({ mode }) {
       ) : null}
 
       {mode === "users" ? (
-        <Card title="Quản lý tài khoản người dùng">
+        <Card title="Quản lý tài khoản người dùng" description="Danh sách được trình bày gọn gàng, dễ nhìn hơn cho người mới sử dụng.">
           <div className="grid gap-4">
             {users.map((u) => (
-              <div key={u.id} className="panel-soft p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <p className="font-bold">{u.fullName}</p>
-                    <p className="text-sm text-[color:var(--muted)]">{u.email} · {roleLabel(u.role)} · {statusLabel(u.status)} · Xác minh: {statusLabel(u.verificationStatus)}</p>
+              <div key={u.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-2">
+                    <p className="text-xl font-extrabold text-[color:var(--ink)]">{u.fullName}</p>
+                    <p className="text-sm text-[color:var(--muted)]">{u.email}</p>
+                    <div className="flex flex-wrap gap-2 pt-1 text-xs font-bold">
+                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-700">Vai trò: {roleLabel(u.role)}</span>
+                      <span className={`rounded-full px-3 py-1.5 ${u.status === "ACTIVE" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(u.status)}</span>
+                      <span className={`rounded-full px-3 py-1.5 ${u.verificationStatus === "VERIFIED" ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-amber-700"}`}>Xác minh: {statusLabel(u.verificationStatus)}</span>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => lockUser(u)}>Khóa</button>
-                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => unlockUser(u)}>Mở khóa</button>
+                  <div className="flex flex-wrap gap-2">
+                    {u.status === "LOCKED" ? (
+                      <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => unlockUser(u)}>Mở khóa</button>
+                    ) : (
+                      <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => lockUser(u)}>Khóa</button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -854,19 +862,25 @@ function AdminSection({ mode }) {
       ) : null}
 
       {mode === "admin-posts" ? (
-        <Card title="Quản lý bài đăng">
+        <Card title="Quản lý bài đăng" description="Bố cục rõ ràng hơn để quản trị viên dễ duyệt và xử lý bài đăng.">
           <div className="grid gap-4">
             {posts.map((post) => (
-              <div key={post.id} className="panel-soft p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-bold">{post.title}</p>
-                  <Badge>{statusLabel(post.status)}</Badge>
-                </div>
-                <p className="mt-2 text-sm text-[color:var(--muted)]">{post.landlord?.fullName} · {post.room?.address}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => approvePost(post)}>Duyệt</button>
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectPost(post)}>Từ chối</button>
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => hidePost(post)}>Ẩn</button>
+              <div key={post.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-2">
+                    <p className="text-xl font-extrabold text-[color:var(--ink)]">{post.title}</p>
+                    <p className="text-sm text-[color:var(--muted)]">{post.landlord?.fullName} · {post.room?.address || "Chưa cập nhật địa chỉ"}</p>
+                    <div className="flex flex-wrap gap-2 pt-1 text-xs font-bold">
+                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-700">Chủ trọ: {post.landlord?.fullName || "Không rõ"}</span>
+                      <span className="rounded-full bg-violet-100 px-3 py-1.5 text-violet-700">Phòng: {post.room?.title || "Không gắn phòng"}</span>
+                      <span className={`rounded-full px-3 py-1.5 ${post.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" : post.status === "PENDING" ? "bg-amber-100 text-amber-700" : post.status === "HIDDEN" ? "bg-slate-200 text-slate-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(post.status)}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 lg:justify-end">
+                    <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => approvePost(post)}>Duyệt</button>
+                    <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => rejectPost(post)}>Từ chối</button>
+                    <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => hidePost(post)}>Ẩn</button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1021,4 +1035,9 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
+
+
+
+
+
 
