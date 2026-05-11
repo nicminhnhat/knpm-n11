@@ -39,6 +39,7 @@ function RoomDetailPage() {
   const reportReasons = ["Thông tin không chính xác", "Phòng trọ không tồn tại", "Giá thuê sai so với thực tế", "Hình ảnh không đúng thực tế", "Có dấu hiệu lừa đảo", "Nội dung không phù hợp", "Chủ trọ không phản hồi", "Lý do khác"];
   const [reportForm, setReportForm] = useState({ reason: "", content: "" });
   const [isOpeningChat, setIsOpeningChat] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   const approvedPost = useMemo(() => room?.posts?.[0], [room]);
 
@@ -70,6 +71,10 @@ function RoomDetailPage() {
   }
 
   async function openChatWithLandlord() {
+    if (!isAuthenticated) {
+      setShowAuthPrompt(true);
+      return;
+    }
     if (!requireStudentAction()) return;
     try {
       setIsOpeningChat(true);
@@ -97,6 +102,53 @@ function RoomDetailPage() {
 
   return (
     <>
+      {showAuthPrompt ? (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-[2rem] border border-white/80 bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.25)]">
+            <button
+              aria-label="Đóng"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-base font-semibold text-[color:var(--muted)] transition hover:bg-slate-100"
+              type="button"
+              onClick={() => setShowAuthPrompt(false)}
+            >
+              X
+            </button>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-xl font-extrabold text-amber-700">
+                !
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-xl font-extrabold text-[color:var(--ink)]">Bạn cần đăng nhập trước</h3>
+                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                  Vui lòng đăng nhập hoặc đăng ký tài khoản để nhắn tin liên hệ chủ trọ.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                className="button-secondary"
+                type="button"
+                onClick={() => {
+                  setShowAuthPrompt(false);
+                  navigate("/register");
+                }}
+              >
+                Đăng ký
+              </button>
+              <button
+                className="button-primary"
+                type="button"
+                onClick={() => {
+                  setShowAuthPrompt(false);
+                  navigate("/login");
+                }}
+              >
+                Đăng nhập
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {feedback.modal}
       <PageIntro
         aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">Thông tin phòng trọ</p><p className="mt-2">Theo dõi giá thuê, tiện ích, đánh giá và liên hệ chủ trọ.</p></div>}
