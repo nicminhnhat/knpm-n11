@@ -26,7 +26,14 @@ function RoomsPage() {
       if (Array.isArray(value)) {
         if (value.length) params.set(key, value.join(","));
       } else if (value) {
-        params.set(key, value);
+        if (key === "minPrice" || key === "maxPrice") {
+          const numValue = parseFloat(value);
+          if (!isNaN(numValue)) {
+            params.set(key, numValue * 1000000);
+          }
+        } else {
+          params.set(key, value);
+        }
       }
     });
     return params.toString();
@@ -51,6 +58,10 @@ function RoomsPage() {
   }, [queryString]);
 
   function updateFilter(key, value) {
+    if ((key === "minPrice" || key === "maxPrice") && value !== "") {
+      const numValue = parseFloat(value);
+      if (numValue < 0) return;
+    }
     setFilters((current) => ({ ...current, [key]: value }));
   }
 
@@ -77,8 +88,8 @@ function RoomsPage() {
           <div className="panel p-6 sm:p-8">
             <div className="grid gap-4 lg:grid-cols-5">
               <input className="input-shell lg:col-span-2" placeholder="Tìm đường, khu vực, trường học..." value={filters.q} onChange={(e) => updateFilter("q", e.target.value)} />
-              <input className="input-shell" placeholder="Giá từ" type="number" value={filters.minPrice} onChange={(e) => updateFilter("minPrice", e.target.value)} />
-              <input className="input-shell" placeholder="Giá đến" type="number" value={filters.maxPrice} onChange={(e) => updateFilter("maxPrice", e.target.value)} />
+              <input className="input-shell" placeholder="Giá từ (triệu)" type="number" min="0" step="any" onKeyDown={(e) => e.key === "-" && e.preventDefault()} value={filters.minPrice} onChange={(e) => updateFilter("minPrice", e.target.value)} />
+              <input className="input-shell" placeholder="Giá đến (triệu)" type="number" min="0" step="any" onKeyDown={(e) => e.key === "-" && e.preventDefault()} value={filters.maxPrice} onChange={(e) => updateFilter("maxPrice", e.target.value)} />
               <input className="input-shell" placeholder="Khu vực" value={filters.district} onChange={(e) => updateFilter("district", e.target.value)} />
               <select className="input-shell" value={filters.type} onChange={(e) => updateFilter("type", e.target.value)}>
                 <option value="">Tất cả loại phòng</option>
