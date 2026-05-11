@@ -42,7 +42,8 @@ function getManagementLinks(role) {
       { label: "Xác minh tài khoản chủ trọ", to: "/dashboard/admin-verifications" },
       { label: "Quản lý bài đăng", to: "/dashboard/admin-posts" },
       { label: "Quản lý tài khoản người dùng", to: "/dashboard/users" },
-      { label: "Xử lý báo cáo vi phạm", to: "/dashboard/reports" }
+      { label: "Xử lý báo cáo vi phạm", to: "/dashboard/reports" },
+      { label: "Thông báo", to: "/dashboard/notifications" }
     ];
   }
 

@@ -2,6 +2,21 @@ const interactionService = require("../services/interaction.service");
 const { ok, fail, clean, opt, pageInfo, intNum } = require("../utils/helpers");
 
 class InteractionController {
+  // CONTACT SUPPORT
+  async createContactRequest(req, res) {
+    const fullName = clean(req.body.fullName || req.body.name || req.body.hoTen);
+    const contact = clean(req.body.contact || req.body.emailOrPhone || req.body.lienHe);
+    const content = clean(req.body.content || req.body.message || req.body.noiDung);
+    const senderRole = req.user?.role || "GUEST";
+
+    if (!fullName || !contact || !content) {
+      return fail(res, 400, "Vui long nhap day du ho ten, thong tin lien he va noi dung can ho tro.");
+    }
+
+    const delivered = await interactionService.createContactRequest({ fullName, contact, content, senderRole });
+    return ok(res, { message: "Gui lien he thanh cong. Admin se phan hoi som.", delivered }, 201);
+  }
+
   // REPORTS
   async createReport(req, res) {
     const postId = clean(req.body.postId || req.body.maBaiDang);

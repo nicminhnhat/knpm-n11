@@ -2,6 +2,28 @@ const prisma = require("../lib/prisma");
 const { userSelect } = require("../utils/constants");
 
 class InteractionService {
+  // CONTACT SUPPORT
+  async createContactRequest({ fullName, contact, content, senderRole = "GUEST" }) {
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN", status: "ACTIVE" },
+      select: { id: true }
+    });
+    if (!admins.length) return 0;
+
+    const title = `[Lien he ho tro] ${fullName}`;
+    const body = `Nguoi gui: ${fullName} (${senderRole}) | Lien he: ${contact} | Noi dung: ${content}`;
+    const result = await prisma.notification.createMany({
+      data: admins.map((admin) => ({
+        userId: admin.id,
+        type: "SUPPORT_CONTACT",
+        title,
+        content: body
+      }))
+    });
+
+    return result.count || 0;
+  }
+
   // REPORTS
   async getPostForReport(postId) {
     return prisma.post.findFirst({ where: { id: postId, status: { not: "DELETED" } } });

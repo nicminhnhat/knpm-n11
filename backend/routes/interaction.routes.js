@@ -6,6 +6,7 @@ const { asyncHandler } = require("../utils/helpers");
 
 // PUBLIC ROUTES (No auth needed)
 router.get("/rooms/:roomId/reviews", asyncHandler(interactionController.getReviews));
+router.post("/contact", asyncHandler(interactionController.createContactRequest));
 
 // STUDENT ONLY ROUTES
 router.post("/reports", authenticateToken, authorizeRoles("STUDENT"), asyncHandler(interactionController.createReport));
