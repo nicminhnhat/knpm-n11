@@ -252,9 +252,12 @@ function StudentSection() {
     <Card title="Báo cáo của tôi" description="Theo dõi các báo cáo tin đăng vi phạm đã gửi cho quản trị viên.">
       <div className="grid gap-4">
         {reports.length ? reports.map((report) => (
-          <div key={report.id} className="panel-soft p-4">
-            <div className="flex items-center justify-between gap-3"><p className="font-bold">{report.reason}</p><Badge>{statusLabel(report.status)}</Badge></div>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">{report.post?.title}</p>
+          <div key={report.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
+            <p className="text-xl font-extrabold text-[color:var(--ink)]">{report.reason}</p>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">Bài đăng: {report.post?.title || "Không rõ"}</p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+              <span className={`rounded-full px-3 py-1.5 ${report.status === "RESOLVED" ? "bg-emerald-100 text-emerald-700" : report.status === "PENDING" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(report.status)}</span>
+            </div>
             {report.adminNote ? <p className="mt-2 text-sm text-[color:var(--muted)]">Phản hồi: {report.adminNote}</p> : null}
           </div>
         )) : <p className="text-sm text-[color:var(--muted)]">Chưa gửi báo cáo.</p>}
@@ -391,13 +394,18 @@ function LandlordRoomsSection() {
       </form>
       <div className="mt-6 grid gap-4">
         {rooms.length ? rooms.map((room) => (
-          <div key={room.id} className="panel-soft p-4">
+          <div key={room.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-start gap-4">
                 <img alt={room.title} className="h-20 w-28 rounded-2xl object-cover" src={roomImage(room)} />
                 <div>
-                  <p className="font-bold">{room.title}</p>
-                  <p className="text-sm text-[color:var(--muted)]">{room.address} · {asVnd(room.price)} · {statusLabel(room.status)}</p>
+                  <p className="text-xl font-extrabold text-[color:var(--ink)]">{room.title}</p>
+                  <p className="text-sm text-[color:var(--muted)]">{room.address}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+                    <span className="rounded-full bg-violet-100 px-3 py-1.5 text-violet-700">Giá: {asVnd(room.price)}</span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-700">Diện tích: {room.area} m²</span>
+                    <span className={`rounded-full px-3 py-1.5 ${room.status === "AVAILABLE" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(room.status)}</span>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -505,13 +513,16 @@ function LandlordPostsSection() {
       </form>
       <div className="mt-6 grid gap-4">
         {posts.length ? posts.map((post) => (
-          <div key={post.id} className="panel-soft p-4">
+          <div key={post.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-start gap-4">
                 {post.room ? <img alt={post.title} className="h-20 w-28 rounded-2xl object-cover" src={roomImage(post.room)} /> : null}
                 <div>
-                  <div className="flex items-center gap-3"><p className="font-bold">{post.title}</p><Badge>{statusLabel(post.status)}</Badge></div>
-                  <p className="mt-2 text-sm text-[color:var(--muted)]">{post.rejectReason || post.description}</p>
+                  <p className="text-xl font-extrabold text-[color:var(--ink)]">{post.title}</p>
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">{post.rejectReason || post.description}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+                    <span className={`rounded-full px-3 py-1.5 ${post.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" : post.status === "PENDING" ? "bg-amber-100 text-amber-700" : post.status === "HIDDEN" ? "bg-slate-200 text-slate-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(post.status)}</span>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -606,18 +617,18 @@ function MessagesSection() {
       {action.modal}
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-3">
-          {threads.map((thread) => <button key={thread.id} className={`w-full rounded-2xl border p-4 text-left text-sm transition ${selected?.id === thread.id ? "border-[color:var(--brand)] bg-orange-50" : "border-[color:var(--line)] bg-white hover:border-[color:var(--brand)]"}`} onClick={() => { setSelected(thread); loadMessages(thread.id); }}><strong>{thread.room?.title || thread.post?.title || "Cuộc trò chuyện"}</strong><p className="mt-1 text-[color:var(--muted)]">Sinh viên: {thread.student?.fullName} · Chủ trọ: {thread.landlord?.fullName}</p></button>)}
+          {threads.map((thread) => <button key={thread.id} className={`w-full rounded-[1.2rem] border p-4 text-left text-sm transition ${selected?.id === thread.id ? "border-[color:var(--brand)] bg-orange-50" : "border-[color:var(--line)] bg-white hover:border-[color:var(--brand)]"}`} onClick={() => { setSelected(thread); loadMessages(thread.id); }}><strong className="text-base text-[color:var(--ink)]">{thread.room?.title || thread.post?.title || "Cuộc trò chuyện"}</strong><p className="mt-1 text-[color:var(--muted)]">Sinh viên: {thread.student?.fullName} · Chủ trọ: {thread.landlord?.fullName}</p></button>)}
           {!threads.length ? <p className="text-sm text-[color:var(--muted)]">Chưa có cuộc trò chuyện.</p> : null}
         </div>
-        <div className="panel-soft p-4">
+        <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
           {selected ? (
             <>
-              <div className="mb-4 rounded-2xl bg-white p-4">
+              <div className="mb-4 rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-4">
                 <p className="font-bold text-[color:var(--ink)]">{selected.room?.title || selected.post?.title || "Cuộc trò chuyện"}</p>
                 <p className="mt-1 text-sm text-[color:var(--muted)]">Trao đổi trực tiếp trong cùng một giao diện.</p>
               </div>
               <div className="max-h-96 space-y-3 overflow-y-auto pr-2">
-                {messages.length ? messages.map((msg) => <div key={msg.id} className="rounded-2xl bg-white p-3 text-sm"><strong>{msg.sender?.fullName || "Người gửi"}</strong><p className="mt-1 text-[color:var(--muted)]">{msg.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có tin nhắn trong cuộc trò chuyện này.</p>}
+                {messages.length ? messages.map((msg) => <div key={msg.id} className="rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-3 text-sm"><strong>{msg.sender?.fullName || "Người gửi"}</strong><p className="mt-1 text-[color:var(--muted)]">{msg.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có tin nhắn trong cuộc trò chuyện này.</p>}
               </div>
               <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={async (event) => {
                 event.preventDefault();
@@ -651,6 +662,7 @@ function AdminSection({ mode }) {
   const [dashboard, setDashboard] = useState(null);
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [expandedPostId, setExpandedPostId] = useState(null);
   const [verifications, setVerifications] = useState([]);
   const [reports, setReports] = useState([]);
 
@@ -678,7 +690,10 @@ function AdminSection({ mode }) {
       () => action.run(
         () => authRequest(`/api/admin/posts/${post.id}/moderate`, { method: "PATCH", body: JSON.stringify({ action: "approve" }) }),
         "Bài đăng đã được phê duyệt.",
-        load
+        async () => {
+          await load();
+          setExpandedPostId(post.id);
+        }
       ),
       "Duyệt"
     );
@@ -694,7 +709,10 @@ function AdminSection({ mode }) {
       onSubmit: (reason) => action.run(
         () => authRequest(`/api/admin/posts/${post.id}/moderate`, { method: "PATCH", body: JSON.stringify({ action: "reject", reason }) }),
         "Bài đăng đã được từ chối.",
-        load
+        async () => {
+          await load();
+          setExpandedPostId(post.id);
+        }
       )
     });
   }
@@ -706,7 +724,10 @@ function AdminSection({ mode }) {
       () => action.run(
         () => authRequest(`/api/admin/posts/${post.id}/moderate`, { method: "PATCH", body: JSON.stringify({ action: "hide", reason: "Ẩn bởi quản trị viên" }) }),
         "Bài đăng đã được ẩn.",
-        load
+        async () => {
+          await load();
+          setExpandedPostId(post.id);
+        }
       ),
       "Ẩn bài"
     );
@@ -877,11 +898,42 @@ function AdminSection({ mode }) {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 lg:justify-end">
+                    <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => setExpandedPostId((current) => current === post.id ? null : post.id)}>
+                      {expandedPostId === post.id ? "Thu gọn hồ sơ" : "Xem hồ sơ đăng ký"}
+                    </button>
                     <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => approvePost(post)}>Duyệt</button>
                     <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => rejectPost(post)}>Từ chối</button>
                     <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => hidePost(post)}>Ẩn</button>
                   </div>
                 </div>
+                {expandedPostId === post.id ? (
+                  <div className="mt-4 rounded-2xl border border-[color:var(--line)] bg-[color:var(--surface)] p-4">
+                    <p className="text-lg font-extrabold text-[color:var(--ink)]">Thông tin đăng ký chi tiết</p>
+                    <div className="mt-3 grid gap-3 text-sm text-[color:var(--muted)] sm:grid-cols-2">
+                      <div><strong className="text-[color:var(--ink)]">Chủ trọ:</strong> {post.landlord?.fullName || "Không rõ"}</div>
+                      <div><strong className="text-[color:var(--ink)]">Email:</strong> {post.landlord?.email || "Không rõ"}</div>
+                      <div><strong className="text-[color:var(--ink)]">Số điện thoại:</strong> {post.landlord?.phone || post.room?.contactPhone || "Chưa cập nhật"}</div>
+                      <div><strong className="text-[color:var(--ink)]">Địa chỉ:</strong> {post.room?.address || "Chưa cập nhật"}</div>
+                      <div><strong className="text-[color:var(--ink)]">Tiêu đề phòng:</strong> {post.room?.title || "Chưa cập nhật"}</div>
+                      <div><strong className="text-[color:var(--ink)]">Loại phòng:</strong> {post.room?.type || "Chưa cập nhật"}</div>
+                      <div><strong className="text-[color:var(--ink)]">Giá thuê:</strong> {post.room?.price ? asVnd(post.room.price) : "Chưa cập nhật"}</div>
+                      <div><strong className="text-[color:var(--ink)]">Diện tích:</strong> {post.room?.area ? `${post.room.area} m²` : "Chưa cập nhật"}</div>
+                      <div className="sm:col-span-2"><strong className="text-[color:var(--ink)]">Tiện ích:</strong> {Array.isArray(post.room?.amenities) && post.room.amenities.length ? post.room.amenities.join(", ") : "Chưa cập nhật"}</div>
+                      <div className="sm:col-span-2"><strong className="text-[color:var(--ink)]">Mô tả bài đăng:</strong> {post.description || "Chưa cập nhật"}</div>
+                      <div className="sm:col-span-2"><strong className="text-[color:var(--ink)]">Mô tả phòng:</strong> {post.room?.description || "Chưa cập nhật"}</div>
+                    </div>
+                    {post.room?.images?.length ? (
+                      <div className="mt-4">
+                        <p className="mb-2 text-sm font-bold text-[color:var(--ink)]">Ảnh đã đăng ký</p>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          {post.room.images.map((img) => (
+                            <img key={img.id} alt={img.alt || post.room?.title || post.title} className="h-40 w-full rounded-xl object-cover" src={img.url} />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -892,19 +944,25 @@ function AdminSection({ mode }) {
         <Card title="Xác minh tài khoản chủ trọ">
           <div className="grid gap-4">
             {verifications.map((v) => (
-              <div key={v.id} className="panel-soft p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-bold">{v.fullName}</p>
-                  <Badge>{statusLabel(v.status)}</Badge>
-                </div>
-                <p className="mt-2 text-sm text-[color:var(--muted)]">{v.phone} · {v.address} · {v.documentType}: {v.documentNumber}</p>
-                {v.documentUrl ? <a className="mt-2 inline-block text-sm font-bold text-[color:var(--brand)]" href={v.documentUrl} target="_blank" rel="noreferrer">Xem ảnh giấy tờ</a> : null}
-                {v.status === "PENDING" ? (
-                  <div className="mt-3 flex gap-2">
-                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => approveVerification(v)}>Xác nhận</button>
-                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectVerification(v)}>Từ chối</button>
+              <div key={v.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="text-xl font-extrabold text-[color:var(--ink)]">{v.fullName}</p>
+                    <p className="mt-1 text-sm text-[color:var(--muted)]">{v.phone} · {v.address} · {v.documentType}: {v.documentNumber}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+                      <span className={`rounded-full px-3 py-1.5 ${v.status === "VERIFIED" ? "bg-emerald-100 text-emerald-700" : v.status === "PENDING" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(v.status)}</span>
+                    </div>
+                    {v.documentUrl ? <a className="mt-3 inline-block text-sm font-bold text-[color:var(--brand)]" href={v.documentUrl} target="_blank" rel="noreferrer">Xem ảnh giấy tờ</a> : null}
                   </div>
-                ) : null}
+                  <div className="flex flex-wrap gap-2">
+                    {v.status === "PENDING" ? (
+                      <>
+                        <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => approveVerification(v)}>Xác nhận</button>
+                        <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => rejectVerification(v)}>Từ chối</button>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -915,19 +973,26 @@ function AdminSection({ mode }) {
         <Card title="Xử lý báo cáo vi phạm">
           <div className="grid gap-4">
             {reports.map((report) => (
-              <div key={report.id} className="panel-soft p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-bold">{report.reason}</p>
-                  <Badge>{statusLabel(report.status)}</Badge>
-                </div>
-                <p className="mt-2 text-sm text-[color:var(--muted)]">Người báo cáo: {report.reporter?.fullName} · Bài đăng: {report.post?.title}</p>
-                <p className="mt-1 text-sm text-[color:var(--muted)]">{report.content}</p>
-                {report.status === "PENDING" ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => resolveReport(report)}>Xử lý và ẩn bài</button>
-                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectReport(report)}>Từ chối</button>
+              <div key={report.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="text-xl font-extrabold text-[color:var(--ink)]">{report.reason}</p>
+                    <p className="mt-1 text-sm text-[color:var(--muted)]">Người báo cáo: {report.reporter?.fullName} · Bài đăng: {report.post?.title}</p>
+                    <p className="mt-1 text-sm text-[color:var(--muted)]">{report.content}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+                      <span className={`rounded-full px-3 py-1.5 ${report.status === "RESOLVED" ? "bg-emerald-100 text-emerald-700" : report.status === "PENDING" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(report.status)}</span>
+                    </div>
+                    {report.status !== "PENDING" && report.adminNote ? <p className="mt-2 text-sm text-[color:var(--muted)]">Ghi chú: {report.adminNote}</p> : null}
                   </div>
-                ) : report.adminNote ? <p className="mt-3 text-sm text-[color:var(--muted)]">Ghi chú: {report.adminNote}</p> : null}
+                  <div className="flex flex-wrap gap-2">
+                    {report.status === "PENDING" ? (
+                      <>
+                        <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => resolveReport(report)}>Xử lý và ẩn bài</button>
+                        <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => rejectReport(report)}>Từ chối</button>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -940,7 +1005,7 @@ function AdminSection({ mode }) {
 function NotificationsSection() {
   const [notifications, setNotifications] = useState([]);
   useEffect(() => { authRequest("/api/notifications").then((r) => setNotifications(r.notifications || [])).catch(() => { }); }, []);
-  return <Card title="Thông báo"><div className="grid gap-3">{notifications.length ? notifications.map((n) => <div key={n.id} className="panel-soft p-4"><p className="font-bold">{n.title}</p><p className="mt-1 text-sm text-[color:var(--muted)]">{n.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có thông báo.</p>}</div></Card>;
+  return <Card title="Thông báo"><div className="grid gap-3">{notifications.length ? notifications.map((n) => <div key={n.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5"><p className="text-lg font-extrabold text-[color:var(--ink)]">{n.title}</p><p className="mt-1 text-sm text-[color:var(--muted)]">{n.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có thông báo.</p>}</div></Card>;
 }
 
 function DashboardPage() {
