@@ -155,6 +155,7 @@ function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoutDialog, setLogoutDialog] = useState(null);
   const { isAuthenticated, logout, user } = useAuth();
+  const topNavigation = user?.role === "ADMIN" ? mainNavigation.filter((item) => item.to !== "/contact") : mainNavigation;
 
   function requestLogout() {
     setLogoutDialog({
@@ -209,7 +210,7 @@ function SiteHeader() {
 
         <div className="hidden items-center justify-between px-8 py-5 lg:flex">
           <nav className="flex items-center gap-8 text-sm font-bold uppercase tracking-[0.18em]">
-            {mainNavigation.map((item) => (
+            {topNavigation.map((item) => (
               <NavLink key={item.to} className={navClass} end={item.to === "/"} to={item.to}>
                 {item.label}
               </NavLink>
@@ -255,7 +256,7 @@ function SiteHeader() {
               )}
             </div>
             <div className="grid gap-4 text-sm font-bold uppercase tracking-[0.18em]">
-              {mainNavigation.map((item) => (
+              {topNavigation.map((item) => (
                 <NavLink
                   key={item.to}
                   className={navClass}
