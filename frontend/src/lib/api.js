@@ -1,4 +1,11 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const envApiUrl = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.PROD
+  ? envApiUrl
+  : (envApiUrl || "http://localhost:3001");
+
+if (import.meta.env.PROD && !API_URL) {
+  throw new Error("Missing VITE_API_URL in production build.");
+}
 const AUTH_TOKEN_KEY = "knpm_n11_auth_token";
 
 function getAuthToken() {
