@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import logoImage from "../assets/logo.png";
 import { useAuth } from "../context/AuthContext.jsx";
 import { mainNavigation } from "../data/siteData.js";
+import FeedbackModal from "./FeedbackModal.jsx";
 import { Icon } from "./Icons.jsx";
 
 function navClass({ isActive }) {
@@ -26,12 +27,11 @@ function getRoleLabel(role) {
   return "Sinh viên";
 }
 
-
-function getManagementItems(role) {
+function getManagementLinks(role) {
   if (role === "LANDLORD") {
     return [
-      { label: "Xác minh", to: "/dashboard/verification" },
-      { label: "Quản lý trọ", to: "/dashboard/rooms" },
+      { label: "Xác minh tài khoản", to: "/dashboard/verification" },
+      { label: "Quản lý phòng trọ", to: "/dashboard/rooms" },
       { label: "Quản lý bài đăng", to: "/dashboard/posts" },
       { label: "Nhắn tin", to: "/dashboard/messages" }
     ];
@@ -39,15 +39,17 @@ function getManagementItems(role) {
 
   if (role === "ADMIN") {
     return [
-      { label: "Xác minh", to: "/dashboard/verification" },
-      { label: "Quản lý bài đăng", to: "/dashboard/posts" },
-      { label: "Quản lý tài khoản", to: "/dashboard/users" },
-      { label: "Báo cáo vi phạm", to: "/dashboard/reports" }
+      { label: "Xác minh tài khoản chủ trọ", to: "/dashboard/admin-verifications" },
+      { label: "Quản lý bài đăng", to: "/dashboard/admin-posts" },
+      { label: "Quản lý tài khoản người dùng", to: "/dashboard/users" },
+      { label: "Xử lý báo cáo vi phạm", to: "/dashboard/reports" }
     ];
   }
 
   return [
-    { label: "Nhắn tin", to: "/dashboard/messages" }
+    { label: "Nhắn tin", to: "/dashboard/messages" },
+    { label: "Báo cáo của tôi", to: "/dashboard/reports" },
+    { label: "Thông tin cá nhân", to: "/dashboard/profile" }
   ];
 }
 
@@ -67,75 +69,74 @@ function GuestLinks({ onNavigate }) {
   );
 }
 
-function UserLinks({ onLogout, user }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+function ManagementDropdown({ onNavigate, role }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const location = useLocation();
-  const managementItems = getManagementItems(user.role);
-  const dashboardActive = location.pathname.startsWith("/dashboard");
+  const links = getManagementLinks(role);
+  const isDashboard = location.pathname.startsWith("/dashboard");
 
   useEffect(() => {
-    setMenuOpen(false);
+    setIsOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
+    function handlePointerDown(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
 
   return (
-    <>
-      <div className="relative" ref={menuRef}>
-        <button
-          aria-expanded={menuOpen}
-          aria-haspopup="menu"
-          className={[
-            "relative inline-flex items-center gap-2 transition-colors duration-200 hover:text-[color:var(--brand)] after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:rounded-full after:bg-[color:var(--brand)] after:transition-transform after:duration-200",
-            dashboardActive
-              ? "text-[color:var(--brand)] after:scale-x-100"
-              : "text-[color:var(--ink)] hover:after:scale-x-100"
-          ].join(" ")}
-          onClick={() => setMenuOpen((value) => !value)}
-          type="button"
-        >
-          Danh mục quản lý
-          <span className={`text-xs transition-transform ${menuOpen ? "rotate-180" : ""}`}>▾</span>
-        </button>
+    <div className="relative z-[120]" ref={dropdownRef}>
+      <button
+        className={`${navClass({ isActive: isDashboard })} flex items-center gap-2 font-semibold`}
+        onClick={() => setIsOpen((value) => !value)}
+        type="button"
+      >
+        Danh mục quản lý
+        <span className={`text-xs transition-transform ${isOpen ? "rotate-180" : ""}`}>⌄</span>
+      </button>
 
-        {menuOpen ? (
-          <div className="absolute left-1/2 top-10 z-50 w-64 -translate-x-1/2 rounded-[1.5rem] border border-[color:var(--line)] bg-white p-2 text-sm shadow-[0_22px_55px_rgba(22,50,74,0.14)]" role="menu">
+      {isOpen ? (
+        <div className="absolute right-0 top-[calc(100%+1.1rem)] z-[999] max-h-[70vh] w-72 overflow-y-auto rounded-[1.5rem] border border-[color:var(--line)] bg-white p-2 text-sm shadow-[0_24px_70px_rgba(22,50,74,0.22)]">
+          <NavLink
+            className="mb-1 block rounded-2xl px-4 py-3 font-bold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
+            onClick={() => {
+              setIsOpen(false);
+              onNavigate?.();
+            }}
+            to="/dashboard"
+          >
+            Tổng quan
+          </NavLink>
+          {links.map((item) => (
             <NavLink
-              className="block rounded-2xl px-4 py-3 font-bold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
-              onClick={() => setMenuOpen(false)}
-              to="/dashboard"
+              key={item.to}
+              className={({ isActive }) => `block rounded-2xl px-4 py-3 font-bold transition ${isActive ? "bg-[color:var(--accent-soft)] text-[color:var(--brand)]" : "text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"}`}
+              onClick={() => {
+                setIsOpen(false);
+                onNavigate?.();
+              }}
+              to={item.to}
             >
-              Tổng quan
+              {item.label}
             </NavLink>
-            {managementItems.map((item) => (
-              <NavLink
-                key={item.to}
-                className={({ isActive }) => [
-                  "block rounded-2xl px-4 py-3 font-bold transition",
-                  isActive
-                    ? "bg-[color:var(--accent-soft)] text-[color:var(--brand)]"
-                    : "text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
-                ].join(" ")}
-                onClick={() => setMenuOpen(false)}
-                to={item.to}
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </div>
-        ) : null}
-      </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
+function UserLinks({ onLogout, user }) {
+  return (
+    <>
+      <ManagementDropdown role={user.role} />
       <div className="rounded-full bg-white px-4 py-2 text-sm text-[color:var(--ink)] shadow-[0_10px_24px_rgba(22,50,74,0.06)]">
         <span className="font-bold">{user.fullName}</span>
         <span className="ml-2 text-[color:var(--muted)]">({getRoleLabel(user.role)})</span>
@@ -147,14 +148,31 @@ function UserLinks({ onLogout, user }) {
   );
 }
 
-
 function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoutDialog, setLogoutDialog] = useState(null);
   const { isAuthenticated, logout, user } = useAuth();
 
+  function requestLogout() {
+    setLogoutDialog({
+      type: "confirm",
+      title: "Xác nhận đăng xuất",
+      message: "Bạn có chắc chắn muốn đăng xuất không?",
+      confirmLabel: "Đăng xuất",
+      cancelLabel: "Hủy"
+    });
+  }
+
+  function confirmLogout() {
+    setLogoutDialog(null);
+    logout();
+    setMobileOpen(false);
+  }
+
   return (
-    <header className="shell z-40 pt-4 sm:pt-5">
-      <div className="panel overflow-visible bg-[color:var(--surface-strong)]/92 backdrop-blur">
+    <header className="shell relative z-[100] pt-4 sm:pt-5">
+      <FeedbackModal dialog={logoutDialog} onClose={() => setLogoutDialog(null)} onConfirm={confirmLogout} />
+      <div className="panel relative overflow-visible bg-[color:var(--surface-strong)]/92 backdrop-blur">
         <div className="flex items-center justify-between gap-4 border-b border-[color:var(--line)] px-5 py-4 sm:px-8">
           <NavLink className="flex items-center gap-4" to="/">
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-[color:var(--surface-soft)] p-2">
@@ -172,7 +190,7 @@ function SiteHeader() {
               <span>Hotline: 0123 456 789</span>
             </div>
             <div className="flex items-center gap-5 text-sm font-semibold">
-              {isAuthenticated ? <UserLinks onLogout={logout} user={user} /> : <GuestLinks />}
+              {isAuthenticated ? <UserLinks onLogout={requestLogout} user={user} /> : <GuestLinks />}
             </div>
           </div>
 
@@ -209,37 +227,23 @@ function SiteHeader() {
                     <div className="font-bold">{user.fullName}</div>
                     <div className="mt-1 text-sm text-[color:var(--muted)]">{getRoleLabel(user.role)}</div>
                   </div>
-                  <details className="rounded-[1.25rem] border border-[color:var(--line)] bg-white p-3 shadow-[0_10px_24px_rgba(22,50,74,0.06)]">
-                    <summary className="cursor-pointer list-none font-bold text-[color:var(--ink)]">Danh mục quản lý</summary>
-                    <div className="mt-3 grid gap-2">
-                      <NavLink className="rounded-2xl px-3 py-2 font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]" onClick={() => setMobileOpen(false)} to="/dashboard">
-                        Tổng quan
+                  <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-3 shadow-[0_10px_24px_rgba(22,50,74,0.06)]">
+                    <p className="mb-2 px-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[color:var(--brand)]">Danh mục quản lý</p>
+                    <NavLink className="block rounded-2xl px-3 py-2 font-bold text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]" onClick={() => setMobileOpen(false)} to="/dashboard">
+                      Tổng quan
+                    </NavLink>
+                    {getManagementLinks(user.role).map((item) => (
+                      <NavLink
+                        key={item.to}
+                        className={({ isActive }) => `block rounded-2xl px-3 py-2 font-bold transition ${isActive ? "bg-[color:var(--accent-soft)] text-[color:var(--brand)]" : "text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"}`}
+                        onClick={() => setMobileOpen(false)}
+                        to={item.to}
+                      >
+                        {item.label}
                       </NavLink>
-                      {getManagementItems(user.role).map((item) => (
-                        <NavLink
-                          key={item.to}
-                          className={({ isActive }) => [
-                            "rounded-2xl px-3 py-2 font-semibold transition",
-                            isActive
-                              ? "bg-[color:var(--accent-soft)] text-[color:var(--brand)]"
-                              : "text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
-                          ].join(" ")}
-                          onClick={() => setMobileOpen(false)}
-                          to={item.to}
-                        >
-                          {item.label}
-                        </NavLink>
-                      ))}
-                    </div>
-                  </details>
-                  <button
-                    className="button-secondary justify-center"
-                    onClick={() => {
-                      logout();
-                      setMobileOpen(false);
-                    }}
-                    type="button"
-                  >
+                    ))}
+                  </div>
+                  <button className="button-secondary justify-center" onClick={requestLogout} type="button">
                     Đăng xuất
                   </button>
                 </>

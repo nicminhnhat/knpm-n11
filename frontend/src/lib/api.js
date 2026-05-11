@@ -84,7 +84,7 @@ function statusLabel(status) {
     VERIFIED: "Đã xác minh",
     REJECTED: "Bị từ chối",
     AVAILABLE: "Còn phòng",
-    RENTED: "Đã thuê",
+    RENTED: "Hết phòng",
     HIDDEN: "Đã ẩn",
     APPROVED: "Đã duyệt",
     DELETED: "Đã xóa",

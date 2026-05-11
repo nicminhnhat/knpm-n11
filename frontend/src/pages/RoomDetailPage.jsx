@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import FeedbackModal from "../components/FeedbackModal.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -36,8 +36,9 @@ function RoomDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: "" });
-  const [reportForm, setReportForm] = useState({ reason: "Thông tin không chính xác", content: "" });
-  const [messageContent, setMessageContent] = useState("Xin chào, em muốn hỏi thêm thông tin về phòng trọ này.");
+  const reportReasons = ["Thông tin không chính xác", "Phòng trọ không tồn tại", "Giá thuê sai so với thực tế", "Hình ảnh không đúng thực tế", "Có dấu hiệu lừa đảo", "Nội dung không phù hợp", "Chủ trọ không phản hồi", "Lý do khác"];
+  const [reportForm, setReportForm] = useState({ reason: "", content: "" });
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
 
   const approvedPost = useMemo(() => room?.posts?.[0], [room]);
 
@@ -68,7 +69,31 @@ function RoomDetailPage() {
     return true;
   }
 
+  async function openChatWithLandlord() {
+    if (!requireStudentAction()) return;
+    try {
+      setIsOpeningChat(true);
+      const response = await authRequest("/api/messages/threads", {
+        method: "POST",
+        body: JSON.stringify({
+          landlordId: item.landlordId,
+          roomId: item.id,
+          postId: approvedPost?.id,
+          content: "Xin chào, em muốn hỏi thêm thông tin về phòng trọ này."
+        })
+      });
+      navigate(`/dashboard/messages?thread=${response.thread?.id || ""}`);
+    } catch (error) {
+      feedback.notify("error", "Không thể mở cuộc trò chuyện", error.message || "Vui lòng thử lại sau.");
+    } finally {
+      setIsOpeningChat(false);
+    }
+  }
+
   const item = normalizeRoom(room);
+  const imageList = item?.images?.length ? item.images : item ? [{ url: roomImage(item), alt: item.title }] : [];
+  const mapQuery = item ? `${item.address || ""} ${item.district || ""} Huế`.trim() : "Huế";
+  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
 
   return (
     <>
@@ -88,7 +113,14 @@ function RoomDetailPage() {
             <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="space-y-6">
                 <div className="panel overflow-hidden">
-                  <img alt={item.title} className="h-[420px] w-full object-cover" src={roomImage(item)} />
+                  <img alt={imageList[0]?.alt || item.title} className="h-[420px] w-full object-cover" src={imageList[0]?.url || roomImage(item)} />
+                  {imageList.length > 1 ? (
+                    <div className="grid gap-3 p-4 sm:grid-cols-3">
+                      {imageList.slice(1, 4).map((image, index) => (
+                        <img key={`${image.url}-${index}`} alt={image.alt || item.title} className="h-28 w-full rounded-2xl object-cover" src={image.url} />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="panel p-6 sm:p-8">
@@ -115,6 +147,20 @@ function RoomDetailPage() {
                     <p>Điện: {item.electricityPrice ? asVnd(item.electricityPrice) : "Theo giá thực tế"}</p>
                     <p>Nước: {item.waterPrice ? asVnd(item.waterPrice) : "Theo giá thực tế"}</p>
                     <p>Internet: {item.internetPrice ? asVnd(item.internetPrice) : "Theo gói phòng"}</p>
+                  </div>
+                </div>
+
+                <div className="panel overflow-hidden p-6 sm:p-8">
+                  <h3 className="text-xl font-bold text-[color:var(--ink)]">Vị trí phòng trọ trên bản đồ</h3>
+                  <p className="mt-2 text-sm text-[color:var(--muted)]">{item.address}</p>
+                  <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-[color:var(--line)]">
+                    <iframe
+                      className="h-80 w-full"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={mapSrc}
+                      title={`Bản đồ ${item.title}`}
+                    />
                   </div>
                 </div>
 
@@ -163,36 +209,10 @@ function RoomDetailPage() {
                     <p><strong className="text-[color:var(--ink)]">Số điện thoại:</strong> {item.contactPhone || item.landlord?.phone || "Chưa cập nhật"}</p>
                   </div>
                   <div className="mt-6 grid gap-3">
-                    <button className="button-secondary justify-center" type="button" onClick={() => {
-                      if (!requireStudentAction()) return;
-                      feedback.run(
-                        () => authRequest(`/api/favorites/${item.id}`, { method: "POST" }),
-                        "Phòng trọ đã được lưu vào danh sách yêu thích.",
-                        loadRoom
-                      );
-                    }}>Lưu yêu thích</button>
-                    <Link className="button-primary justify-center" to="/dashboard">Mở bảng điều khiển</Link>
+                    <button className="button-primary justify-center" disabled={isOpeningChat} type="button" onClick={openChatWithLandlord}>
+                      {isOpeningChat ? "Đang mở cuộc trò chuyện..." : "Nhắn tin liên hệ"}
+                    </button>
                   </div>
-                </div>
-
-                <div className="panel p-6">
-                  <h3 className="text-xl font-bold text-[color:var(--ink)]">Nhắn tin chủ trọ</h3>
-                  <form className="mt-4 grid gap-4" onSubmit={(event) => {
-                    event.preventDefault();
-                    if (!requireStudentAction()) return;
-                    if (!String(messageContent || "").trim()) {
-                      feedback.warn("Vui lòng nhập nội dung tin nhắn.");
-                      return;
-                    }
-                    feedback.run(
-                      () => authRequest("/api/messages/threads", { method: "POST", body: JSON.stringify({ landlordId: item.landlordId, roomId: item.id, postId: approvedPost?.id, content: messageContent }) }),
-                      "Tin nhắn đã được gửi cho chủ trọ.",
-                      loadRoom
-                    );
-                  }}>
-                    <textarea className="input-shell min-h-28" value={messageContent} onChange={(e) => setMessageContent(e.target.value)} />
-                    <button className="button-primary" type="submit">Gửi tin nhắn</button>
-                  </form>
                 </div>
 
                 <div className="panel p-6">
@@ -205,7 +225,7 @@ function RoomDetailPage() {
                       return;
                     }
                     if (!String(reportForm.reason || "").trim()) {
-                      feedback.warn("Vui lòng nhập lý do báo cáo.");
+                      feedback.warn("Vui lòng chọn lý do báo cáo.");
                       return;
                     }
                     feedback.run(
@@ -214,9 +234,12 @@ function RoomDetailPage() {
                       loadRoom
                     );
                   }}>
-                    <input className="input-shell" value={reportForm.reason} onChange={(e) => setReportForm((v) => ({ ...v, reason: e.target.value }))} />
-                    <textarea className="input-shell min-h-24" placeholder="Mô tả chi tiết vi phạm" value={reportForm.content} onChange={(e) => setReportForm((v) => ({ ...v, content: e.target.value }))} />
-                    <button className="button-secondary" type="submit">Gửi báo cáo</button>
+                    <select className="input-shell" value={reportForm.reason} onChange={(e) => setReportForm((v) => ({ ...v, reason: e.target.value }))}>
+                      <option value="">Chọn lý do báo cáo</option>
+                      {reportReasons.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
+                    </select>
+                    <textarea className="input-shell min-h-32" placeholder="Mô tả chi tiết vi phạm" value={reportForm.content} onChange={(e) => setReportForm((v) => ({ ...v, content: e.target.value }))} />
+                    <button className="button-secondary justify-center" type="submit">Gửi báo cáo</button>
                   </form>
                 </div>
               </aside>

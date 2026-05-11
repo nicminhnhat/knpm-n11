@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import FeedbackModal from "../components/FeedbackModal.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -21,9 +21,9 @@ function Badge({ children }) {
   return <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-bold text-[color:var(--brand)]">{children}</span>;
 }
 
-function Field({ label, children }) {
+function Field({ label, children, className = "" }) {
   return (
-    <label className="grid gap-2 text-sm font-bold text-[color:var(--ink)]">
+    <label className={`grid content-start gap-2 self-start text-sm font-bold text-[color:var(--ink)] ${className}`}>
       <span>{label}</span>
       {children}
     </label>
@@ -31,18 +31,18 @@ function Field({ label, children }) {
 }
 
 function TextInput(props) {
-  return <input {...props} className={`input-shell ${props.className || ""}`} />;
+  return <input {...props} className={`input-shell min-h-14 leading-6 ${props.className || ""}`} />;
 }
 
 function TextArea(props) {
-  return <textarea {...props} className={`input-shell min-h-24 ${props.className || ""}`} />;
+  return <textarea {...props} className={`input-shell min-h-32 resize-y leading-7 ${props.className || ""}`} />;
 }
 
 function Select(props) {
-  return <select {...props} className={`input-shell ${props.className || ""}`} />;
+  return <select {...props} className={`input-shell min-h-14 leading-6 ${props.className || ""}`} />;
 }
 
-function ImageUploadField({ label, value, onChange, action, previewAlt = "Hình ảnh" }) {
+function ImageUploadField({ label, value, onChange, action, previewAlt = "Hình ảnh", className = "" }) {
   const [isUploading, setIsUploading] = useState(false);
 
   async function handleFile(event) {
@@ -61,16 +61,18 @@ function ImageUploadField({ label, value, onChange, action, previewAlt = "Hình 
       action?.warn(err.message || "Không thể tải hình ảnh lên hệ thống.", "Tải ảnh thất bại");
     } finally {
       setIsUploading(false);
+      event.target.value = "";
     }
   }
 
   return (
-    <Field label={label}>
+    <Field label={label} className={className}>
       <div className="grid gap-3">
-        <input accept="image/*" className="input-shell" type="file" onChange={handleFile} />
-        {isUploading ? <p className="text-xs font-semibold text-[color:var(--brand)]">Đang tải hình ảnh...</p> : null}
-        <TextInput placeholder="Hoặc nhập liên kết hình ảnh" value={value || ""} onChange={(e) => onChange(e.target.value)} />
-        {value ? <img alt={previewAlt} className="h-32 w-full rounded-2xl object-cover" src={value} /> : null}
+        <label className="flex min-h-14 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[color:var(--line)] bg-[color:var(--surface)] px-4 py-3.5 text-sm font-extrabold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--accent-soft)]">
+          <input accept="image/*" className="sr-only" type="file" onChange={handleFile} />
+          {isUploading ? "Đang tải ảnh..." : value ? "Đổi ảnh" : "Chọn ảnh"}
+        </label>
+        {value ? <img alt={previewAlt} className="h-28 w-full rounded-2xl object-cover sm:h-32" src={value} /> : null}
       </div>
     </Field>
   );
@@ -237,83 +239,115 @@ function ProfileSection({ refreshUser, user }) {
 }
 
 function StudentSection() {
-  const action = useActionDialog();
-  const [favorites, setFavorites] = useState([]);
   const [reports, setReports] = useState([]);
 
   async function load() {
-    const [fav, rep] = await Promise.all([authRequest("/api/favorites"), authRequest("/api/my/reports")]);
-    setFavorites(fav.favorites || []);
+    const rep = await authRequest("/api/my/reports");
     setReports(rep.reports || []);
   }
 
   useEffect(() => { load().catch(() => { }); }, []);
 
   return (
-    <Card title="Khu vực sinh viên">
-      {action.modal}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4">
-          <h3 className="font-bold text-[color:var(--ink)]">Phòng yêu thích</h3>
-          {favorites.length ? favorites.map((favorite) => (
-            <div key={favorite.id} className="panel-soft p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-bold">{favorite.room?.title}</p>
-                  <p className="mt-1 text-sm text-[color:var(--muted)]">{favorite.room?.address}</p>
-                  <p className="mt-1 text-sm font-bold text-[color:var(--brand)]">{asVnd(favorite.room?.price)}</p>
-                </div>
-                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.confirm(
-                  "Bỏ lưu phòng trọ",
-                  "Bạn có chắc chắn muốn bỏ phòng này khỏi danh sách yêu thích?",
-                  () => action.run(
-                    () => authRequest(`/api/favorites/${favorite.roomId}`, { method: "DELETE" }),
-                    "Đã bỏ phòng khỏi danh sách yêu thích.",
-                    load
-                  ),
-                  "Bỏ lưu"
-                )}>Bỏ lưu</button>
-              </div>
-            </div>
-          )) : <p className="text-sm text-[color:var(--muted)]">Chưa lưu phòng nào.</p>}
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="font-bold text-[color:var(--ink)]">Báo cáo của tôi</h3>
-          {reports.length ? reports.map((report) => (
-            <div key={report.id} className="panel-soft p-4">
-              <div className="flex items-center justify-between gap-3"><p className="font-bold">{report.reason}</p><Badge>{statusLabel(report.status)}</Badge></div>
-              <p className="mt-2 text-sm text-[color:var(--muted)]">{report.post?.title}</p>
-              {report.adminNote ? <p className="mt-2 text-sm text-[color:var(--muted)]">Phản hồi: {report.adminNote}</p> : null}
-            </div>
-          )) : <p className="text-sm text-[color:var(--muted)]">Chưa gửi báo cáo.</p>}
-        </div>
+    <Card title="Báo cáo của tôi" description="Theo dõi các báo cáo tin đăng vi phạm đã gửi cho quản trị viên.">
+      <div className="grid gap-4">
+        {reports.length ? reports.map((report) => (
+          <div key={report.id} className="panel-soft p-4">
+            <div className="flex items-center justify-between gap-3"><p className="font-bold">{report.reason}</p><Badge>{statusLabel(report.status)}</Badge></div>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">{report.post?.title}</p>
+            {report.adminNote ? <p className="mt-2 text-sm text-[color:var(--muted)]">Phản hồi: {report.adminNote}</p> : null}
+          </div>
+        )) : <p className="text-sm text-[color:var(--muted)]">Chưa gửi báo cáo.</p>}
       </div>
     </Card>
   );
 }
 
-function LandlordSection({ view = "all" } = {}) {
+function ManagementCard({ title, description, to }) {
+  return (
+    <Link className="panel-soft block p-5 transition hover:-translate-y-1 hover:border-[color:var(--brand)] hover:shadow-[0_18px_45px_rgba(22,50,74,0.10)]" to={to}>
+      <p className="text-lg font-extrabold text-[color:var(--ink)]">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{description}</p>
+      <span className="mt-4 inline-flex text-sm font-bold text-[color:var(--brand)]">Mở chức năng →</span>
+    </Link>
+  );
+}
+
+function LandlordVerificationSection() {
   const action = useActionDialog();
-  const emptyRoomForm = { title: "", description: "", address: "", district: "TP Huế", price: "", area: "", type: "SINGLE", amenities: "Wifi, chỗ để xe", contactPhone: "", imageUrl: "" };
-  const emptyPostForm = { roomId: "", title: "", description: "", imageUrl: "" };
   const [verification, setVerification] = useState(null);
-  const [rooms, setRooms] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [roomForm, setRoomForm] = useState(emptyRoomForm);
-  const [postForm, setPostForm] = useState(emptyPostForm);
   const [verifyForm, setVerifyForm] = useState({ fullName: "", phone: "", address: "", documentType: "CCCD", documentNumber: "", documentUrl: "", note: "" });
 
   async function load() {
-    const [r, p] = await Promise.all([authRequest("/api/landlord/rooms"), authRequest("/api/landlord/posts")]);
-    const roomList = r.rooms || [];
-    console.log(roomList);
-    setRooms(roomList);
-    setPosts(p.posts || []);
-    setPostForm((cur) => ({ ...cur, roomId: cur.roomId || roomList[0]?.id || "" }));
+    const response = await authRequest("/api/landlord/verification/me");
+    setVerification(response.requests?.[0] || null);
   }
 
   useEffect(() => { load().catch(() => { }); }, []);
+
+  return (
+    <Card title="Xác minh chủ trọ">
+      {action.modal}
+      {verification ? <div className="mb-5 panel-soft p-4"><div className="flex items-center justify-between"><strong>Hồ sơ gần nhất</strong><Badge>{statusLabel(verification.status)}</Badge></div>{verification.rejectionReason ? <p className="mt-2 text-sm text-red-700">Lý do từ chối: {verification.rejectionReason}</p> : null}</div> : null}
+      <form className="grid items-start gap-x-6 gap-y-5 lg:grid-cols-2" onSubmit={async (event) => {
+        event.preventDefault();
+        if (isBlank(verifyForm.fullName) || isBlank(verifyForm.phone) || isBlank(verifyForm.address) || isBlank(verifyForm.documentNumber) || isBlank(verifyForm.documentUrl)) {
+          action.warn("Vui lòng nhập đầy đủ họ tên, số điện thoại, địa chỉ, số giấy tờ và ảnh giấy tờ.");
+          return;
+        }
+        await action.run(
+          () => authRequest("/api/landlord/verification/requests", { method: "POST", body: JSON.stringify(verifyForm) }),
+          "Hồ sơ xác minh đã được gửi.",
+          load
+        );
+      }}>
+        <Field label="Họ tên trên giấy tờ"><TextInput value={verifyForm.fullName} onChange={(e) => setVerifyForm((v) => ({ ...v, fullName: e.target.value }))} /></Field>
+        <Field label="Số điện thoại"><TextInput value={verifyForm.phone} onChange={(e) => setVerifyForm((v) => ({ ...v, phone: e.target.value }))} /></Field>
+        <Field label="Địa chỉ"><TextInput value={verifyForm.address} onChange={(e) => setVerifyForm((v) => ({ ...v, address: e.target.value }))} /></Field>
+        <Field label="Số giấy tờ"><TextInput value={verifyForm.documentNumber} onChange={(e) => setVerifyForm((v) => ({ ...v, documentNumber: e.target.value }))} /></Field>
+        <ImageUploadField label="Ảnh giấy tờ" value={verifyForm.documentUrl} onChange={(url) => setVerifyForm((v) => ({ ...v, documentUrl: url }))} action={action} previewAlt="Ảnh giấy tờ xác minh" />
+        <Field label="Ghi chú"><TextInput value={verifyForm.note} onChange={(e) => setVerifyForm((v) => ({ ...v, note: e.target.value }))} /></Field>
+        <button className="button-primary w-fit lg:col-span-2" type="submit">Gửi xác minh</button>
+      </form>
+    </Card>
+  );
+}
+
+function LandlordRoomsSection() {
+  const action = useActionDialog();
+  const emptyRoomForm = { title: "", description: "", address: "", district: "TP Huế", price: "", area: "", type: "SINGLE", amenities: "Wifi, chỗ để xe", contactPhone: "", imageUrl: "" };
+  const [rooms, setRooms] = useState([]);
+  const [roomForm, setRoomForm] = useState(emptyRoomForm);
+  const [editingRoomId, setEditingRoomId] = useState(null);
+
+  async function load() {
+    const response = await authRequest("/api/landlord/rooms");
+    setRooms(response.rooms || []);
+  }
+
+  useEffect(() => { load().catch(() => { }); }, []);
+
+  function startEditRoom(room) {
+    setEditingRoomId(room.id);
+    setRoomForm({
+      title: room.title || "",
+      description: room.description || "",
+      address: room.address || "",
+      district: room.district || "TP Huế",
+      price: String(room.price || ""),
+      area: String(room.area || ""),
+      type: room.type || "SINGLE",
+      amenities: Array.isArray(room.amenities) ? room.amenities.join(", ") : "",
+      contactPhone: room.contactPhone || "",
+      imageUrl: roomImage(room)
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function resetRoomForm() {
+    setEditingRoomId(null);
+    setRoomForm(emptyRoomForm);
+  }
 
   async function submitRoom(event) {
     event.preventDefault();
@@ -330,11 +364,109 @@ function LandlordSection({ view = "all" } = {}) {
       images: [{ url: roomForm.imageUrl, alt: roomForm.title }]
     };
     const ok = await action.run(
-      () => authRequest("/api/landlord/rooms", { method: "POST", body: JSON.stringify(payload) }),
-      "Phòng trọ đã được thêm vào hệ thống.",
+      () => authRequest(editingRoomId ? `/api/landlord/rooms/${editingRoomId}` : "/api/landlord/rooms", { method: editingRoomId ? "PUT" : "POST", body: JSON.stringify(payload) }),
+      editingRoomId ? "Thông tin phòng trọ đã được cập nhật." : "Phòng trọ đã được thêm vào hệ thống.",
       load
     );
-    if (ok) setRoomForm(emptyRoomForm);
+    if (ok) resetRoomForm();
+  }
+
+  return (
+    <Card title="Quản lý phòng trọ">
+      {action.modal}
+      <form className="grid items-start gap-x-6 gap-y-5 lg:grid-cols-3" onSubmit={submitRoom}>
+        <Field label="Tiêu đề phòng"><TextInput value={roomForm.title} onChange={(e) => setRoomForm((v) => ({ ...v, title: e.target.value }))} /></Field>
+        <Field label="Giá thuê"><TextInput type="number" value={roomForm.price} onChange={(e) => setRoomForm((v) => ({ ...v, price: e.target.value }))} /></Field>
+        <Field label="Diện tích"><TextInput type="number" value={roomForm.area} onChange={(e) => setRoomForm((v) => ({ ...v, area: e.target.value }))} /></Field>
+        <Field label="Địa chỉ"><TextInput value={roomForm.address} onChange={(e) => setRoomForm((v) => ({ ...v, address: e.target.value }))} /></Field>
+        <Field label="Khu vực"><TextInput value={roomForm.district} onChange={(e) => setRoomForm((v) => ({ ...v, district: e.target.value }))} /></Field>
+        <Field label="Loại phòng"><Select value={roomForm.type} onChange={(e) => setRoomForm((v) => ({ ...v, type: e.target.value }))}><option value="SINGLE">Phòng đơn</option><option value="SHARED">Ở ghép</option><option value="APARTMENT">Căn hộ</option><option value="OTHER">Khác</option></Select></Field>
+        <Field label="Tiện ích"><TextInput value={roomForm.amenities} onChange={(e) => setRoomForm((v) => ({ ...v, amenities: e.target.value }))} /></Field>
+        <Field label="Số điện thoại liên hệ"><TextInput value={roomForm.contactPhone} onChange={(e) => setRoomForm((v) => ({ ...v, contactPhone: e.target.value }))} /></Field>
+        <ImageUploadField label="Hình ảnh phòng trọ" value={roomForm.imageUrl} onChange={(url) => setRoomForm((v) => ({ ...v, imageUrl: url }))} action={action} previewAlt={roomForm.title || "Hình ảnh phòng trọ"} className="lg:row-span-2" />
+        <Field label="Mô tả phòng" className="lg:col-span-2"><TextArea value={roomForm.description} onChange={(e) => setRoomForm((v) => ({ ...v, description: e.target.value }))} /></Field>
+        <div className="flex flex-wrap gap-3 lg:col-span-3">
+          <button className="button-primary w-fit" type="submit">{editingRoomId ? "Lưu chỉnh sửa" : "Thêm phòng"}</button>
+          {editingRoomId ? <button className="button-secondary w-fit" type="button" onClick={resetRoomForm}>Hủy chỉnh sửa</button> : null}
+        </div>
+      </form>
+      <div className="mt-6 grid gap-4">
+        {rooms.length ? rooms.map((room) => (
+          <div key={room.id} className="panel-soft p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4">
+                <img alt={room.title} className="h-20 w-28 rounded-2xl object-cover" src={roomImage(room)} />
+                <div>
+                  <p className="font-bold">{room.title}</p>
+                  <p className="text-sm text-[color:var(--muted)]">{room.address} · {asVnd(room.price)} · {statusLabel(room.status)}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => startEditRoom(room)}>Chỉnh sửa</button>
+                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.requestSelect({
+                  title: "Thay đổi trạng thái phòng",
+                  message: "Vui lòng chọn trạng thái mới cho phòng trọ này:",
+                  defaultValue: room.status === "RENTED" ? "RENTED" : "AVAILABLE",
+                  options: [
+                    { label: "Còn phòng", value: "AVAILABLE" },
+                    { label: "Hết phòng", value: "RENTED" }
+                  ],
+                  onSubmit: (newStatus) => {
+                    if (newStatus !== room.status) {
+                      action.run(
+                        () => authRequest(`/api/landlord/rooms/${room.id}/status`, { method: "PATCH", body: JSON.stringify({ status: newStatus }) }),
+                        "Trạng thái phòng đã được cập nhật.",
+                        load
+                      );
+                    }
+                  }
+                })}>Đổi trạng thái</button>
+                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.confirm(
+                  "Xóa phòng trọ",
+                  `Bạn có chắc chắn muốn xóa phòng “${room.title}”?`,
+                  () => action.run(
+                    () => authRequest(`/api/landlord/rooms/${room.id}`, { method: "DELETE" }),
+                    "Phòng trọ đã được xóa.",
+                    load
+                  ),
+                  "Xóa"
+                )}>Xóa</button>
+              </div>
+            </div>
+          </div>
+        )) : <p className="text-sm text-[color:var(--muted)]">Chưa có phòng trọ nào.</p>}
+      </div>
+    </Card>
+  );
+}
+
+function LandlordPostsSection() {
+  const action = useActionDialog();
+  const emptyPostForm = { roomId: "", title: "", description: "", imageUrl: "" };
+  const [rooms, setRooms] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [postForm, setPostForm] = useState(emptyPostForm);
+  const [editingPostId, setEditingPostId] = useState(null);
+
+  async function load() {
+    const [roomResponse, postResponse] = await Promise.all([authRequest("/api/landlord/rooms"), authRequest("/api/landlord/posts")]);
+    const roomList = roomResponse.rooms || [];
+    setRooms(roomList);
+    setPosts(postResponse.posts || []);
+    setPostForm((cur) => ({ ...cur, roomId: cur.roomId || roomList[0]?.id || "" }));
+  }
+
+  useEffect(() => { load().catch(() => { }); }, []);
+
+  function resetPostForm() {
+    setEditingPostId(null);
+    setPostForm({ ...emptyPostForm, roomId: rooms[0]?.id || "" });
+  }
+
+  function startEditPost(post) {
+    setEditingPostId(post.id);
+    setPostForm({ roomId: post.roomId || post.room?.id || rooms[0]?.id || "", title: post.title || "", description: post.description || "", imageUrl: roomImage(post.room) });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function submitPost(event) {
@@ -345,215 +477,164 @@ function LandlordSection({ view = "all" } = {}) {
       return;
     }
     action.confirm(
-      "Xác nhận đăng bài",
-      "Bài đăng sẽ được gửi đến quản trị viên để kiểm duyệt trước khi hiển thị công khai.",
+      editingPostId ? "Xác nhận chỉnh sửa bài đăng" : "Xác nhận đăng bài",
+      editingPostId ? "Bài đăng sau khi chỉnh sửa sẽ được chuyển về trạng thái chờ kiểm duyệt." : "Bài đăng sẽ được gửi đến quản trị viên để kiểm duyệt trước khi hiển thị công khai.",
       async () => {
         const ok = await action.run(
-          () => authRequest("/api/landlord/posts", { method: "POST", body: JSON.stringify(postForm) }),
-          "Bài đăng đã được tạo và đang chờ kiểm duyệt.",
+          () => authRequest(editingPostId ? `/api/landlord/posts/${editingPostId}` : "/api/landlord/posts", { method: editingPostId ? "PUT" : "POST", body: JSON.stringify(postForm) }),
+          editingPostId ? "Bài đăng đã được cập nhật và đang chờ kiểm duyệt." : "Bài đăng đã được tạo và đang chờ kiểm duyệt.",
           load
         );
-        if (ok) setPostForm({ ...emptyPostForm, roomId: rooms[0]?.id || "" });
+        if (ok) resetPostForm();
       },
-      "Đăng bài"
+      editingPostId ? "Lưu" : "Đăng bài"
     );
   }
 
-  const showAll = view === "all";
-
   return (
-    <div className="space-y-8">
+    <Card title="Quản lý bài đăng">
       {action.modal}
-      {(showAll || view === "verification") ? (
-        <Card title="Xác minh chủ trọ">
-        {verification ? <div className="mb-5 panel-soft p-4"><div className="flex items-center justify-between"><strong>Hồ sơ gần nhất</strong><Badge>{statusLabel(verification.status)}</Badge></div>{verification.rejectionReason ? <p className="mt-2 text-sm text-red-700">Lý do từ chối: {verification.rejectionReason}</p> : null}</div> : null}
-        <form className="grid gap-4 lg:grid-cols-2" onSubmit={async (event) => {
-          event.preventDefault();
-          if (isBlank(verifyForm.fullName) || isBlank(verifyForm.phone) || isBlank(verifyForm.documentNumber)) {
-            action.warn("Vui lòng nhập đầy đủ họ tên, số điện thoại và số giấy tờ.");
-            return;
-          }
-          await action.run(
-            () => authRequest("/api/verification/requests", { method: "POST", body: JSON.stringify(verifyForm) }),
-            "Hồ sơ xác minh đã được gửi.",
-            load
-          );
-        }}>
-          <Field label="Họ tên trên giấy tờ"><TextInput value={verifyForm.fullName} onChange={(e) => setVerifyForm((v) => ({ ...v, fullName: e.target.value }))} /></Field>
-          <Field label="Số điện thoại"><TextInput value={verifyForm.phone} onChange={(e) => setVerifyForm((v) => ({ ...v, phone: e.target.value }))} /></Field>
-          <Field label="Địa chỉ"><TextInput value={verifyForm.address} onChange={(e) => setVerifyForm((v) => ({ ...v, address: e.target.value }))} /></Field>
-          <Field label="Số giấy tờ"><TextInput value={verifyForm.documentNumber} onChange={(e) => setVerifyForm((v) => ({ ...v, documentNumber: e.target.value }))} /></Field>
-          <ImageUploadField label="Ảnh giấy tờ" value={verifyForm.documentUrl} onChange={(url) => setVerifyForm((v) => ({ ...v, documentUrl: url }))} action={action} previewAlt="Ảnh giấy tờ xác minh" />
-          <Field label="Ghi chú"><TextInput value={verifyForm.note} onChange={(e) => setVerifyForm((v) => ({ ...v, note: e.target.value }))} /></Field>
-          <button className="button-primary w-fit lg:col-span-2" type="submit">Gửi xác minh</button>
-        </form>
-        </Card>
-      ) : null}
-
-      {(showAll || view === "rooms") ? (
-        <Card title="Quản lý phòng trọ">
-        <form className="grid gap-4 lg:grid-cols-3" onSubmit={submitRoom}>
-          <Field label="Tiêu đề phòng"><TextInput value={roomForm.title} onChange={(e) => setRoomForm((v) => ({ ...v, title: e.target.value }))} /></Field>
-          <Field label="Giá thuê"><TextInput type="number" value={roomForm.price} onChange={(e) => setRoomForm((v) => ({ ...v, price: e.target.value }))} /></Field>
-          <Field label="Diện tích"><TextInput type="number" value={roomForm.area} onChange={(e) => setRoomForm((v) => ({ ...v, area: e.target.value }))} /></Field>
-          <Field label="Địa chỉ"><TextInput value={roomForm.address} onChange={(e) => setRoomForm((v) => ({ ...v, address: e.target.value }))} /></Field>
-          <Field label="Khu vực"><TextInput value={roomForm.district} onChange={(e) => setRoomForm((v) => ({ ...v, district: e.target.value }))} /></Field>
-          <Field label="Loại phòng"><Select value={roomForm.type} onChange={(e) => setRoomForm((v) => ({ ...v, type: e.target.value }))}><option value="SINGLE">Phòng đơn</option><option value="SHARED">Ở ghép</option><option value="APARTMENT">Căn hộ</option><option value="OTHER">Khác</option></Select></Field>
-          <Field label="Tiện ích"><TextInput value={roomForm.amenities} onChange={(e) => setRoomForm((v) => ({ ...v, amenities: e.target.value }))} /></Field>
-          <Field label="Số điện thoại liên hệ"><TextInput value={roomForm.contactPhone} onChange={(e) => setRoomForm((v) => ({ ...v, contactPhone: e.target.value }))} /></Field>
-          <ImageUploadField label="Hình ảnh phòng trọ" value={roomForm.imageUrl} onChange={(url) => setRoomForm((v) => ({ ...v, imageUrl: url }))} action={action} previewAlt={roomForm.title || "Hình ảnh phòng trọ"} />
-          <Field label="Mô tả phòng"><TextArea value={roomForm.description} onChange={(e) => setRoomForm((v) => ({ ...v, description: e.target.value }))} className="lg:col-span-3" /></Field>
-          <button className="button-primary w-fit lg:col-span-3" type="submit">Thêm phòng</button>
-        </form>
-        <div className="mt-6 grid gap-4">
-          {rooms.map((room) => (
-            <div key={room.id} className="panel-soft p-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-start gap-4">
-                  <img alt={room.title} className="h-20 w-28 rounded-2xl object-cover" src={roomImage(room)} />
-                  <div>
-                    <p className="font-bold">{room.title}</p>
-                    <p className="text-sm text-[color:var(--muted)]">{room.address} · {asVnd(room.price)} · {statusLabel(room.status)}</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.requestSelect({
-                    title: "Thay đổi trạng thái phòng",
-                    message: "Vui lòng chọn trạng thái mới cho phòng trọ này:",
-                    defaultValue: room.status,
-                    options: [
-                      { label: "Còn phòng", value: "AVAILABLE" },
-                      { label: "Đã thuê", value: "RENTED" },
-                      { label: "Tạm ẩn", value: "HIDDEN" }
-                    ],
-                    onSubmit: (newStatus) => {
-                      if (newStatus !== room.status) {
-                        action.run(
-                          () => authRequest(`/api/landlord/rooms/${room.id}/status`, { method: "PATCH", body: JSON.stringify({ status: newStatus }) }),
-                          "Trạng thái phòng đã được cập nhật.",
-                          load
-                        );
-                      }
-                    }
-                  })}>Đổi trạng thái</button>
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.confirm(
-                    "Xóa phòng trọ",
-                    `Bạn có chắc chắn muốn xóa phòng “${room.title}”?`,
-                    () => action.run(
-                      () => authRequest(`/api/landlord/rooms/${room.id}`, { method: "DELETE" }),
-                      "Phòng trọ đã được xóa.",
-                      load
-                    ),
-                    "Xóa"
-                  )}>Xóa</button>
+      <form className="grid items-start gap-x-6 gap-y-5 lg:grid-cols-2" onSubmit={submitPost}>
+        <Field label="Chọn phòng trọ"><Select value={postForm.roomId} onChange={(e) => setPostForm((v) => ({ ...v, roomId: e.target.value }))}>{rooms.map((room) => <option key={room.id} value={room.id}>{room.title}</option>)}</Select></Field>
+        <Field label="Tiêu đề bài đăng"><TextInput value={postForm.title} onChange={(e) => setPostForm((v) => ({ ...v, title: e.target.value }))} /></Field>
+        <ImageUploadField label="Hình ảnh bài đăng" value={postForm.imageUrl} onChange={(url) => setPostForm((v) => ({ ...v, imageUrl: url }))} action={action} previewAlt={postForm.title || "Hình ảnh bài đăng"} />
+        <Field label="Mô tả bài đăng"><TextArea value={postForm.description} onChange={(e) => setPostForm((v) => ({ ...v, description: e.target.value }))} className="min-h-40" /></Field>
+        <div className="flex flex-wrap gap-3 lg:col-span-2">
+          <button className="button-primary w-fit" type="submit">{editingPostId ? "Lưu chỉnh sửa bài đăng" : "Tạo bài đăng"}</button>
+          {editingPostId ? <button className="button-secondary w-fit" type="button" onClick={resetPostForm}>Hủy chỉnh sửa</button> : null}
+        </div>
+      </form>
+      <div className="mt-6 grid gap-4">
+        {posts.length ? posts.map((post) => (
+          <div key={post.id} className="panel-soft p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4">
+                {post.room ? <img alt={post.title} className="h-20 w-28 rounded-2xl object-cover" src={roomImage(post.room)} /> : null}
+                <div>
+                  <div className="flex items-center gap-3"><p className="font-bold">{post.title}</p><Badge>{statusLabel(post.status)}</Badge></div>
+                  <p className="mt-2 text-sm text-[color:var(--muted)]">{post.rejectReason || post.description}</p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        </Card>
-      ) : null}
-
-      {(showAll || view === "posts") ? (
-        <Card title="Quản lý bài đăng">
-        <form className="grid gap-4 lg:grid-cols-2" onSubmit={submitPost}>
-          <Field label="Chọn phòng trọ"><Select value={postForm.roomId} onChange={(e) => setPostForm((v) => ({ ...v, roomId: e.target.value }))}>{rooms.map((room) => <option key={room.id} value={room.id}>{room.title}</option>)}</Select></Field>
-          <Field label="Tiêu đề bài đăng"><TextInput value={postForm.title} onChange={(e) => setPostForm((v) => ({ ...v, title: e.target.value }))} /></Field>
-          <ImageUploadField label="Hình ảnh bài đăng" value={postForm.imageUrl} onChange={(url) => setPostForm((v) => ({ ...v, imageUrl: url }))} action={action} previewAlt={postForm.title || "Hình ảnh bài đăng"} />
-          <Field label="Mô tả bài đăng"><TextArea value={postForm.description} onChange={(e) => setPostForm((v) => ({ ...v, description: e.target.value }))} className="lg:col-span-2" /></Field>
-          <button className="button-primary w-fit lg:col-span-2" type="submit">Tạo bài đăng</button>
-        </form>
-        <div className="mt-6 grid gap-4">
-          {posts.map((post) => (
-            <div key={post.id} className="panel-soft p-4">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-start gap-4">
-                  {post.room ? <img alt={post.title} className="h-20 w-28 rounded-2xl object-cover" src={roomImage(post.room)} /> : null}
-                  <div>
-                    <div className="flex items-center gap-3"><p className="font-bold">{post.title}</p><Badge>{statusLabel(post.status)}</Badge></div>
-                    <p className="mt-2 text-sm text-[color:var(--muted)]">{post.rejectReason || post.description}</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {post.status === "HIDDEN" ? (
-                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.run(
-                      () => authRequest(`/api/landlord/posts/${post.id}/unhide`, { method: "PATCH" }),
-                      "Bài đăng đã được hiển thị lại.",
-                      load
-                    )}>Hiện lại</button>
-                  ) : (
-                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.run(
+              <div className="flex flex-wrap gap-2">
+                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => startEditPost(post)}>Chỉnh sửa</button>
+                {post.status === "HIDDEN" ? (
+                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.run(
+                    () => authRequest(`/api/landlord/posts/${post.id}/unhide`, { method: "PATCH" }),
+                    "Bài đăng đã được hiển thị lại.",
+                    load
+                  )}>Hiện lại</button>
+                ) : (
+                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.confirm(
+                    "Ẩn bài đăng",
+                    `Bạn có chắc chắn muốn ẩn bài đăng “${post.title}”?`,
+                    () => action.run(
                       () => authRequest(`/api/landlord/posts/${post.id}/hide`, { method: "PATCH" }),
                       "Bài đăng đã được ẩn.",
                       load
-                    )}>Ẩn</button>
-                  )}
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.confirm(
-                    "Xóa bài đăng",
-                    `Bạn có chắc chắn muốn xóa bài đăng “${post.title}”?`,
-                    () => action.run(
-                      () => authRequest(`/api/landlord/posts/${post.id}`, { method: "DELETE" }),
-                      "Bài đăng đã được xóa.",
-                      load
                     ),
-                    "Xóa"
-                  )}>Xóa</button>
-                </div>
+                    "Ẩn"
+                  )}>Ẩn</button>
+                )}
+                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => action.confirm(
+                  "Xóa bài đăng",
+                  `Bạn có chắc chắn muốn xóa bài đăng “${post.title}”?`,
+                  () => action.run(
+                    () => authRequest(`/api/landlord/posts/${post.id}`, { method: "DELETE" }),
+                    "Bài đăng đã được xóa.",
+                    load
+                  ),
+                  "Xóa"
+                )}>Xóa</button>
               </div>
             </div>
-          ))}
-        </div>
-        </Card>
-      ) : null}
-    </div>
+          </div>
+        )) : <p className="text-sm text-[color:var(--muted)]">Chưa có bài đăng nào.</p>}
+      </div>
+    </Card>
+  );
+}
+
+function LandlordSection({ mode }) {
+  if (mode === "verification") return <LandlordVerificationSection />;
+  if (mode === "rooms") return <LandlordRoomsSection />;
+  if (mode === "posts") return <LandlordPostsSection />;
+
+  return (
+    <Card title="Danh mục quản lý" description="Chọn đúng chức năng cần dùng để thao tác trong từng khu vực riêng, giúp dashboard gọn gàng và dễ quản lý hơn.">
+      <div className="grid gap-4 md:grid-cols-2">
+        <ManagementCard title="Xác minh" description="Gửi và theo dõi hồ sơ xác minh chủ trọ." to="/dashboard/verification" />
+        <ManagementCard title="Quản lý trọ" description="Thêm phòng, xem danh sách phòng và cập nhật trạng thái." to="/dashboard/rooms" />
+        <ManagementCard title="Quản lý bài đăng" description="Tạo bài đăng, ẩn/hiện và xóa bài đăng cho thuê." to="/dashboard/posts" />
+        <ManagementCard title="Nhắn tin" description="Xem danh sách cuộc trò chuyện và phản hồi sinh viên." to="/dashboard/messages" />
+      </div>
+    </Card>
   );
 }
 
 function MessagesSection() {
   const action = useActionDialog();
+  const [searchParams] = useSearchParams();
   const [threads, setThreads] = useState([]);
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState("");
+  const requestedThreadId = searchParams.get("thread");
 
   async function loadThreads() {
     const response = await authRequest("/api/messages/threads");
-    setThreads(response.threads || []);
+    const nextThreads = response.threads || [];
+    setThreads(nextThreads);
+    return nextThreads;
   }
 
   async function loadMessages(threadId) {
     const response = await authRequest(`/api/messages/threads/${threadId}/messages`);
     setMessages(response.messages || []);
+    return response;
   }
 
-  useEffect(() => { loadThreads().catch(() => { }); }, []);
+  useEffect(() => {
+    loadThreads().then((nextThreads) => {
+      if (!nextThreads.length) return;
+      const target = nextThreads.find((thread) => thread.id === requestedThreadId) || nextThreads[0];
+      setSelected(target);
+      loadMessages(target.id).catch(() => { });
+    }).catch(() => { });
+  }, [requestedThreadId]);
 
   return (
-    <Card title="Tin nhắn">
+    <Card title="Tin nhắn" description="Danh sách cuộc trò chuyện và nội dung trao đổi giữa sinh viên với chủ trọ.">
       {action.modal}
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-3">
-          {threads.map((thread) => <button key={thread.id} className={`w-full rounded-2xl border p-4 text-left text-sm ${selected?.id === thread.id ? "border-[color:var(--brand)] bg-orange-50" : "border-[color:var(--line)] bg-white"}`} onClick={() => { setSelected(thread); loadMessages(thread.id); }}><strong>{thread.room?.title || thread.post?.title || "Cuộc trò chuyện"}</strong><p className="mt-1 text-[color:var(--muted)]">Sinh viên: {thread.student?.fullName} · Chủ trọ: {thread.landlord?.fullName}</p></button>)}
+          {threads.map((thread) => <button key={thread.id} className={`w-full rounded-2xl border p-4 text-left text-sm transition ${selected?.id === thread.id ? "border-[color:var(--brand)] bg-orange-50" : "border-[color:var(--line)] bg-white hover:border-[color:var(--brand)]"}`} onClick={() => { setSelected(thread); loadMessages(thread.id); }}><strong>{thread.room?.title || thread.post?.title || "Cuộc trò chuyện"}</strong><p className="mt-1 text-[color:var(--muted)]">Sinh viên: {thread.student?.fullName} · Chủ trọ: {thread.landlord?.fullName}</p></button>)}
           {!threads.length ? <p className="text-sm text-[color:var(--muted)]">Chưa có cuộc trò chuyện.</p> : null}
         </div>
         <div className="panel-soft p-4">
           {selected ? (
             <>
-              <div className="max-h-80 space-y-3 overflow-y-auto pr-2">
-                {messages.map((msg) => <div key={msg.id} className="rounded-2xl bg-white p-3 text-sm"><strong>{msg.sender?.fullName || "Người gửi"}</strong><p className="mt-1 text-[color:var(--muted)]">{msg.content}</p></div>)}
+              <div className="mb-4 rounded-2xl bg-white p-4">
+                <p className="font-bold text-[color:var(--ink)]">{selected.room?.title || selected.post?.title || "Cuộc trò chuyện"}</p>
+                <p className="mt-1 text-sm text-[color:var(--muted)]">Trao đổi trực tiếp trong cùng một giao diện.</p>
               </div>
-              <form className="mt-4 flex gap-3" onSubmit={async (event) => {
+              <div className="max-h-96 space-y-3 overflow-y-auto pr-2">
+                {messages.length ? messages.map((msg) => <div key={msg.id} className="rounded-2xl bg-white p-3 text-sm"><strong>{msg.sender?.fullName || "Người gửi"}</strong><p className="mt-1 text-[color:var(--muted)]">{msg.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có tin nhắn trong cuộc trò chuyện này.</p>}
+              </div>
+              <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={async (event) => {
                 event.preventDefault();
                 if (isBlank(content)) {
                   action.warn("Vui lòng nhập nội dung tin nhắn.");
                   return;
                 }
-                const ok = await action.run(
-                  () => authRequest(`/api/messages/threads/${selected.id}/messages`, { method: "POST", body: JSON.stringify({ content }) }),
-                  "Tin nhắn đã được gửi.",
-                  () => { loadMessages(selected.id); loadThreads(); }
-                );
-                if (ok) setContent("");
+                try {
+                  const nextContent = content;
+                  setContent("");
+                  await authRequest(`/api/messages/threads/${selected.id}/messages`, { method: "POST", body: JSON.stringify({ content: nextContent }) });
+                  await loadMessages(selected.id);
+                  await loadThreads();
+                } catch (err) {
+                  action.warn(err.message || "Không thể gửi tin nhắn. Vui lòng thử lại.", "Không thể gửi tin nhắn");
+                }
               }}>
                 <input className="input-shell" placeholder="Nhập tin nhắn" value={content} onChange={(e) => setContent(e.target.value)} />
                 <button className="button-primary" type="submit">Gửi</button>
@@ -566,7 +647,7 @@ function MessagesSection() {
   );
 }
 
-function AdminSection({ view = "all" } = {}) {
+function AdminSection({ mode }) {
   const action = useActionDialog();
   const [dashboard, setDashboard] = useState(null);
   const [users, setUsers] = useState([]);
@@ -726,109 +807,117 @@ function AdminSection({ view = "all" } = {}) {
     });
   }
 
-  const showAll = view === "all";
-
   return (
     <div className="space-y-8">
       {action.modal}
-      {(showAll || view === "dashboard") ? (
-        <Card title="Bảng điều khiển quản trị">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Object.entries(dashboard || {}).filter(([, v]) => typeof v !== "object").map(([k, v]) => (
-            <div key={k} className="metric-card">
-              <p className="text-2xl font-extrabold text-[color:var(--brand)]">{String(v)}</p>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">{statLabel(k)}</p>
+      {!mode ? (
+        <>
+          <Card title="Bảng điều khiển quản trị" description="Tổng quan nhanh tình trạng người dùng, bài đăng, hồ sơ xác minh và báo cáo.">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Object.entries(dashboard || {}).filter(([, v]) => typeof v !== "object").map(([k, v]) => (
+                <div key={k} className="metric-card">
+                  <p className="text-2xl font-extrabold text-[color:var(--brand)]">{String(v)}</p>
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">{statLabel(k)}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        </Card>
+          </Card>
+          <Card title="Danh mục quản lý quản trị viên" description="Chọn từng chức năng riêng để kiểm duyệt và vận hành hệ thống rõ ràng hơn.">
+            <div className="grid gap-4 md:grid-cols-2">
+              <ManagementCard title="Xác minh tài khoản chủ trọ" description="Kiểm tra giấy tờ và duyệt hồ sơ xác minh." to="/dashboard/admin-verifications" />
+              <ManagementCard title="Quản lý bài đăng" description="Duyệt, từ chối hoặc ẩn bài đăng vi phạm." to="/dashboard/admin-posts" />
+              <ManagementCard title="Quản lý tài khoản người dùng" description="Xem, khóa hoặc mở khóa tài khoản." to="/dashboard/users" />
+              <ManagementCard title="Xử lý báo cáo vi phạm" description="Kiểm tra báo cáo và ghi nhận kết quả xử lý." to="/dashboard/reports" />
+            </div>
+          </Card>
+        </>
       ) : null}
 
-      {(showAll || view === "users") ? (
+      {mode === "users" ? (
         <Card title="Quản lý tài khoản người dùng">
-        <div className="grid gap-4">
-          {users.map((u) => (
-            <div key={u.id} className="panel-soft p-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p className="font-bold">{u.fullName}</p>
-                  <p className="text-sm text-[color:var(--muted)]">{u.email} · {roleLabel(u.role)} · {statusLabel(u.status)} · Xác minh: {statusLabel(u.verificationStatus)}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => lockUser(u)}>Khóa</button>
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => unlockUser(u)}>Mở khóa</button>
+          <div className="grid gap-4">
+            {users.map((u) => (
+              <div key={u.id} className="panel-soft p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="font-bold">{u.fullName}</p>
+                    <p className="text-sm text-[color:var(--muted)]">{u.email} · {roleLabel(u.role)} · {statusLabel(u.status)} · Xác minh: {statusLabel(u.verificationStatus)}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => lockUser(u)}>Khóa</button>
+                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => unlockUser(u)}>Mở khóa</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         </Card>
       ) : null}
 
-      {(showAll || view === "posts") ? (
-        <Card title="Kiểm duyệt bài đăng">
-        <div className="grid gap-4">
-          {posts.map((post) => (
-            <div key={post.id} className="panel-soft p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-bold">{post.title}</p>
-                <Badge>{statusLabel(post.status)}</Badge>
-              </div>
-              <p className="mt-2 text-sm text-[color:var(--muted)]">{post.landlord?.fullName} · {post.room?.address}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => approvePost(post)}>Duyệt</button>
-                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectPost(post)}>Từ chối</button>
-                <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => hidePost(post)}>Ẩn</button>
-              </div>
-            </div>
-          ))}
-        </div>
-        </Card>
-      ) : null}
-
-      {(showAll || view === "verifications") ? (
-        <Card title="Xác minh tài khoản chủ trọ">
-        <div className="grid gap-4">
-          {verifications.map((v) => (
-            <div key={v.id} className="panel-soft p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-bold">{v.fullName}</p>
-                <Badge>{statusLabel(v.status)}</Badge>
-              </div>
-              <p className="mt-2 text-sm text-[color:var(--muted)]">{v.phone} · {v.address} · {v.documentType}: {v.documentNumber}</p>
-              {v.documentUrl ? <a className="mt-2 inline-block text-sm font-bold text-[color:var(--brand)]" href={v.documentUrl} target="_blank" rel="noreferrer">Xem ảnh giấy tờ</a> : null}
-              {v.status === "PENDING" ? (
-                <div className="mt-3 flex gap-2">
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => approveVerification(v)}>Xác nhận</button>
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectVerification(v)}>Từ chối</button>
+      {mode === "admin-posts" ? (
+        <Card title="Quản lý bài đăng">
+          <div className="grid gap-4">
+            {posts.map((post) => (
+              <div key={post.id} className="panel-soft p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-bold">{post.title}</p>
+                  <Badge>{statusLabel(post.status)}</Badge>
                 </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-        </Card>
-      ) : null}
-
-      {(showAll || view === "reports") ? (
-        <Card title="Xử lý báo cáo vi phạm">
-        <div className="grid gap-4">
-          {reports.map((report) => (
-            <div key={report.id} className="panel-soft p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-bold">{report.reason}</p>
-                <Badge>{statusLabel(report.status)}</Badge>
-              </div>
-              <p className="mt-2 text-sm text-[color:var(--muted)]">Người báo cáo: {report.reporter?.fullName} · Bài đăng: {report.post?.title}</p>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">{report.content}</p>
-              {report.status === "PENDING" ? (
+                <p className="mt-2 text-sm text-[color:var(--muted)]">{post.landlord?.fullName} · {post.room?.address}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => resolveReport(report)}>Xử lý và ẩn bài</button>
-                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectReport(report)}>Từ chối</button>
+                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => approvePost(post)}>Duyệt</button>
+                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectPost(post)}>Từ chối</button>
+                  <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => hidePost(post)}>Ẩn</button>
                 </div>
-              ) : report.adminNote ? <p className="mt-3 text-sm text-[color:var(--muted)]">Ghi chú: {report.adminNote}</p> : null}
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {mode === "admin-verifications" ? (
+        <Card title="Xác minh tài khoản chủ trọ">
+          <div className="grid gap-4">
+            {verifications.map((v) => (
+              <div key={v.id} className="panel-soft p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-bold">{v.fullName}</p>
+                  <Badge>{statusLabel(v.status)}</Badge>
+                </div>
+                <p className="mt-2 text-sm text-[color:var(--muted)]">{v.phone} · {v.address} · {v.documentType}: {v.documentNumber}</p>
+                {v.documentUrl ? <a className="mt-2 inline-block text-sm font-bold text-[color:var(--brand)]" href={v.documentUrl} target="_blank" rel="noreferrer">Xem ảnh giấy tờ</a> : null}
+                {v.status === "PENDING" ? (
+                  <div className="mt-3 flex gap-2">
+                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => approveVerification(v)}>Xác nhận</button>
+                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectVerification(v)}>Từ chối</button>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {mode === "reports" ? (
+        <Card title="Xử lý báo cáo vi phạm">
+          <div className="grid gap-4">
+            {reports.map((report) => (
+              <div key={report.id} className="panel-soft p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-bold">{report.reason}</p>
+                  <Badge>{statusLabel(report.status)}</Badge>
+                </div>
+                <p className="mt-2 text-sm text-[color:var(--muted)]">Người báo cáo: {report.reporter?.fullName} · Bài đăng: {report.post?.title}</p>
+                <p className="mt-1 text-sm text-[color:var(--muted)]">{report.content}</p>
+                {report.status === "PENDING" ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => resolveReport(report)}>Xử lý và ẩn bài</button>
+                    <button className="button-secondary px-3 py-2 text-xs" type="button" onClick={() => rejectReport(report)}>Từ chối</button>
+                  </div>
+                ) : report.adminNote ? <p className="mt-3 text-sm text-[color:var(--muted)]">Ghi chú: {report.adminNote}</p> : null}
+              </div>
+            ))}
+          </div>
         </Card>
       ) : null}
     </div>
@@ -839,136 +928,6 @@ function NotificationsSection() {
   const [notifications, setNotifications] = useState([]);
   useEffect(() => { authRequest("/api/notifications").then((r) => setNotifications(r.notifications || [])).catch(() => { }); }, []);
   return <Card title="Thông báo"><div className="grid gap-3">{notifications.length ? notifications.map((n) => <div key={n.id} className="panel-soft p-4"><p className="font-bold">{n.title}</p><p className="mt-1 text-sm text-[color:var(--muted)]">{n.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có thông báo.</p>}</div></Card>;
-}
-
-function getDashboardMenuItems(role) {
-  if (role === "LANDLORD") {
-    return [
-      { title: "Xác minh", description: "Gửi và theo dõi hồ sơ xác minh chủ trọ.", to: "/dashboard/verification" },
-      { title: "Quản lý trọ", description: "Thêm phòng, xem danh sách phòng và cập nhật trạng thái.", to: "/dashboard/rooms" },
-      { title: "Quản lý bài đăng", description: "Tạo bài đăng, ẩn/hiện và xóa bài đăng cho thuê.", to: "/dashboard/posts" },
-      { title: "Nhắn tin", description: "Trao đổi với sinh viên hoặc người dùng khác.", to: "/dashboard/messages" }
-    ];
-  }
-
-  if (role === "ADMIN") {
-    return [
-      { title: "Xác minh", description: "Duyệt hoặc từ chối hồ sơ xác minh chủ trọ.", to: "/dashboard/verification" },
-      { title: "Quản lý bài đăng", description: "Kiểm duyệt, duyệt, từ chối hoặc ẩn bài đăng.", to: "/dashboard/posts" },
-      { title: "Quản lý tài khoản", description: "Theo dõi, khóa hoặc mở khóa tài khoản người dùng.", to: "/dashboard/users" },
-      { title: "Báo cáo vi phạm", description: "Xử lý báo cáo từ người dùng trong hệ thống.", to: "/dashboard/reports" }
-    ];
-  }
-
-  return [
-    { title: "Nhắn tin", description: "Theo dõi và phản hồi các cuộc trò chuyện.", to: "/dashboard/messages" }
-  ];
-}
-
-function getAllowedSections(role) {
-  if (role === "LANDLORD") return ["verification", "rooms", "posts", "messages"];
-  if (role === "ADMIN") return ["verification", "posts", "users", "reports"];
-  return ["messages"];
-}
-
-function getSectionTitle(section, role) {
-  if (!section) return "Bảng điều khiển";
-
-  if (role === "ADMIN") {
-    const adminTitles = {
-      verification: "Xác minh tài khoản chủ trọ",
-      posts: "Kiểm duyệt bài đăng",
-      users: "Quản lý tài khoản",
-      reports: "Báo cáo vi phạm"
-    };
-    return adminTitles[section] || "Danh mục quản lý";
-  }
-
-  const titles = {
-    verification: "Xác minh chủ trọ",
-    rooms: "Quản lý trọ",
-    posts: "Quản lý bài đăng",
-    messages: "Nhắn tin"
-  };
-  return titles[section] || "Danh mục quản lý";
-}
-
-function DashboardOverview({ refreshUser, user }) {
-  const items = getDashboardMenuItems(user.role);
-
-  return (
-    <section className="section-space pt-4">
-      <div className="shell space-y-8">
-        <Card
-          title="Danh mục quản lý"
-          description="Chọn đúng chức năng cần dùng để thao tác trong từng khu vực riêng, giúp dashboard gọn gàng và dễ quản lý hơn."
-        >
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {items.map((item) => (
-              <Link
-                className="group rounded-[1.5rem] border border-[color:var(--line)] bg-white p-5 shadow-[0_14px_34px_rgba(22,50,74,0.06)] transition duration-200 hover:-translate-y-1 hover:border-[color:var(--brand)] hover:shadow-[0_20px_44px_rgba(213,91,54,0.14)]"
-                key={item.to}
-                to={item.to}
-              >
-                <p className="text-lg font-extrabold text-[color:var(--ink)] transition group-hover:text-[color:var(--brand)]">{item.title}</p>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{item.description}</p>
-                <span className="mt-4 inline-flex text-sm font-bold text-[color:var(--brand)]">Mở chức năng →</span>
-              </Link>
-            ))}
-          </div>
-        </Card>
-
-        <ProfileSection user={user} refreshUser={refreshUser} />
-        <NotificationsSection />
-        {user.role === "STUDENT" ? <StudentSection /> : null}
-      </div>
-    </section>
-  );
-}
-
-function DashboardContent({ refreshUser, section, user }) {
-  if (!section) {
-    return <DashboardOverview user={user} refreshUser={refreshUser} />;
-  }
-
-  if (section === "messages") {
-    return (
-      <section className="section-space pt-4">
-        <div className="shell space-y-8">
-          <MessagesSection />
-        </div>
-      </section>
-    );
-  }
-
-  if (user.role === "LANDLORD") {
-    return (
-      <section className="section-space pt-4">
-        <div className="shell space-y-8">
-          <LandlordSection view={section} />
-        </div>
-      </section>
-    );
-  }
-
-  if (user.role === "ADMIN") {
-    const adminViewMap = {
-      verification: "verifications",
-      posts: "posts",
-      users: "users",
-      reports: "reports"
-    };
-
-    return (
-      <section className="section-space pt-4">
-        <div className="shell space-y-8">
-          <AdminSection view={adminViewMap[section]} />
-        </div>
-      </section>
-    );
-  }
-
-  return <Navigate replace to="/dashboard" />;
 }
 
 function DashboardPage() {
@@ -984,27 +943,82 @@ function DashboardPage() {
   if (!isLoading && !isAuthenticated) return <Navigate replace to="/login" />;
   if (isLoading || !user) return <div className="section-space shell">Đang tải tài khoản...</div>;
 
-  const allowedSections = getAllowedSections(user.role);
-  if (section && !allowedSections.includes(section)) {
-    return <Navigate replace to="/dashboard" />;
+  const titleBySection = {
+    profile: "Thông tin cá nhân",
+    notifications: "Thông báo",
+    messages: "Tin nhắn",
+    reports: user.role === "ADMIN" ? "Xử lý báo cáo vi phạm" : "Báo cáo của tôi",
+    verification: "Xác minh chủ trọ",
+    rooms: "Quản lý trọ",
+    posts: "Quản lý bài đăng",
+    "admin-verifications": "Xác minh tài khoản chủ trọ",
+    "admin-posts": "Quản lý bài đăng",
+    users: "Quản lý tài khoản người dùng"
+  };
+
+  function renderOverview() {
+    if (user.role === "LANDLORD") {
+      return (
+        <>
+          <NotificationsSection />
+          <ProfileSection user={user} refreshUser={refreshUser} />
+        </>
+      );
+    }
+    if (user.role === "ADMIN") return <AdminSection />;
+    return (
+      <Card title="Danh mục quản lý sinh viên" description="Các chức năng được tách riêng để dễ theo dõi tin nhắn, báo cáo và thông tin tài khoản.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <ManagementCard title="Nhắn tin" description="Xem và tiếp tục trao đổi với chủ trọ." to="/dashboard/messages" />
+          <ManagementCard title="Báo cáo của tôi" description="Theo dõi tình trạng các báo cáo vi phạm đã gửi." to="/dashboard/reports" />
+          <ManagementCard title="Thông tin cá nhân" description="Cập nhật hồ sơ và đổi mật khẩu." to="/dashboard/profile" />
+          <ManagementCard title="Thông báo" description="Xem các thông báo mới từ hệ thống." to="/dashboard/notifications" />
+        </div>
+      </Card>
+    );
   }
 
-  const sectionTitle = getSectionTitle(section, user.role);
+  function renderSection() {
+    if (!section) return renderOverview();
+    if (section === "profile") return <ProfileSection user={user} refreshUser={refreshUser} />;
+    if (section === "notifications") return <NotificationsSection />;
+    if (section === "messages") return <MessagesSection />;
+
+    if (user.role === "LANDLORD") {
+      if (["verification", "rooms", "posts"].includes(section)) return <LandlordSection mode={section} />;
+      return <Navigate replace to="/dashboard" />;
+    }
+
+    if (user.role === "ADMIN") {
+      if (["admin-verifications", "admin-posts", "users", "reports"].includes(section)) return <AdminSection mode={section} />;
+      return <Navigate replace to="/dashboard" />;
+    }
+
+    if (user.role === "STUDENT") {
+      if (section === "reports") return <StudentSection />;
+      return <Navigate replace to="/dashboard" />;
+    }
+
+    return <Navigate replace to="/dashboard" />;
+  }
 
   return (
     <>
       <PageIntro
         aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">{roleLabel(user.role)}</p><p className="mt-2">Các chức năng quản lý được tách riêng theo từng danh mục để thao tác dễ hơn.</p></div>}
-        description={section ? "Khu vực thao tác riêng, chỉ hiển thị đúng chức năng đang chọn để tránh rối giao diện." : "Trang tổng quan tài khoản. Chọn một mục trong danh mục quản lý để mở chức năng cần dùng."}
-        eyebrow={section ? "Danh mục quản lý" : "Bảng điều khiển"}
+        description="Khu vực thao tác riêng, chỉ hiển thị đúng chức năng đang chọn để tránh rối giao diện."
+        eyebrow="Danh mục quản lý"
         stats={stats}
-        title={section ? sectionTitle : `Xin chào, ${user.fullName}`}
+        title={section ? titleBySection[section] || "Danh mục quản lý" : "Tổng quan"}
       />
 
-      <DashboardContent section={section} user={user} refreshUser={refreshUser} />
+      <section className="section-space pt-4">
+        <div className="shell space-y-8">
+          {renderSection()}
+        </div>
+      </section>
     </>
   );
 }
-
 
 export default DashboardPage;

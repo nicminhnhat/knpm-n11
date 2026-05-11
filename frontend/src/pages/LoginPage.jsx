@@ -38,7 +38,7 @@ function LoginPage() {
   return (
     <>
       <PageIntro
-        aside={<p>Đăng nhập để quản lý tài khoản, phòng yêu thích và các thao tác trong hệ thống.</p>}
+        aside={<p>Đăng nhập để quản lý tài khoản, tin nhắn và các thao tác trong hệ thống.</p>}
         description="Truy cập tài khoản bằng email và mật khẩu đã đăng ký."
         eyebrow="Đăng nhập"
         title="Đăng nhập hệ thống"

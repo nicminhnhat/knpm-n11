@@ -43,7 +43,7 @@ function RegisterPage() {
   return (
     <>
       <PageIntro
-        aside={<p>Tạo tài khoản để tìm phòng, lưu phòng yêu thích hoặc đăng tin cho thuê.</p>}
+        aside={<p>Tạo tài khoản để tìm phòng, nhắn tin liên hệ chủ trọ hoặc đăng tin cho thuê.</p>}
         description="Đăng ký tài khoản sinh viên hoặc chủ trọ để sử dụng đầy đủ chức năng."
         eyebrow="Đăng ký"
         title="Tạo tài khoản mới"
