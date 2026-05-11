@@ -6,7 +6,7 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const { put } = require("@vercel/blob");
-const prisma = require("./lib/prisma");
+const { prisma, withPrismaRetry } = require("./lib/prisma");
 
 const { authenticateToken } = require("./lib/auth-middleware");
 const { asyncHandler, ok, fail } = require("./utils/helpers");
@@ -79,7 +79,10 @@ app.post("/api/uploads", authenticateToken, upload.single("file"), asyncHandler(
   return ok(res, { message: "Tai hinh anh thanh cong.", url: `${baseUrl}/uploads/${req.file.filename}`, storage: "local" }, 201);
 }));
 app.get("/api/health/db", asyncHandler(async (req, res) => {
-  const result = await prisma.$queryRaw`SELECT current_database() AS database, now() AS server_time`;
+  const result = await withPrismaRetry(
+    () => prisma.$queryRaw`SELECT current_database() AS database, now() AS server_time`,
+    { retries: 2, retryDelayMs: 700 }
+  );
   return ok(res, { message: "Database connection is healthy", database: result[0]?.database, serverTime: result[0]?.server_time });
 }));
 
@@ -101,7 +104,10 @@ const PORT = process.env.PORT || 3001;
 let server = null;
 
 if (!isVercel) {
-  server = app.listen(PORT, () => {
+  server = app.listen(PORT, async () => {
+    await withPrismaRetry(() => prisma.$connect(), { retries: 3, retryDelayMs: 800 }).catch((error) => {
+      console.error("Prisma initial connect warning:", error.message);
+    });
     console.log(`Server is running at http://localhost:${PORT}`);
   });
 

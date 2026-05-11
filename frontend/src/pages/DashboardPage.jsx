@@ -341,7 +341,6 @@ function LandlordRoomsSection() {
       contactPhone: room.contactPhone || "",
       imageUrl: roomImage(room)
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function resetRoomForm() {
@@ -1022,3 +1021,4 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
+
