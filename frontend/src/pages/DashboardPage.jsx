@@ -165,6 +165,9 @@ function validateRoomForm(form) {
   if (isBlank(form.address)) return "Vui lòng nhập địa chỉ phòng trọ.";
   if (isBlank(form.price) || Number(form.price) <= 0) return "Vui lòng nhập giá phòng hợp lệ.";
   if (isBlank(form.area) || Number(form.area) <= 0) return "Vui lòng nhập diện tích phòng hợp lệ.";
+  if (isBlank(form.deposit) || Number(form.deposit) < 0) return "Vui lòng nhập tiền cọc cụ thể (>= 0).";
+  if (isBlank(form.electricityPrice) || Number(form.electricityPrice) <= 0) return "Vui lòng nhập giá điện cụ thể.";
+  if (isBlank(form.waterPrice) || Number(form.waterPrice) <= 0) return "Vui lòng nhập giá nước cụ thể.";
   if (isBlank(form.imageUrl)) return "Vui lòng thêm hình ảnh phòng trọ.";
   if (isBlank(form.description)) return "Vui lòng nhập mô tả phòng trọ.";
   return "";
@@ -318,7 +321,21 @@ function LandlordVerificationSection() {
 
 function LandlordRoomsSection() {
   const action = useActionDialog();
-  const emptyRoomForm = { title: "", description: "", address: "", district: "TP Huế", price: "", area: "", type: "SINGLE", amenities: "Wifi, chỗ để xe", contactPhone: "", imageUrl: "" };
+  const emptyRoomForm = {
+    title: "",
+    description: "",
+    address: "",
+    district: "TP Huế",
+    price: "",
+    area: "",
+    type: "SINGLE",
+    amenities: "Wifi, chỗ để xe",
+    contactPhone: "",
+    deposit: "",
+    electricityPrice: "",
+    waterPrice: "",
+    imageUrl: ""
+  };
   const [rooms, setRooms] = useState([]);
   const [roomForm, setRoomForm] = useState(emptyRoomForm);
   const [editingRoomId, setEditingRoomId] = useState(null);
@@ -342,6 +359,9 @@ function LandlordRoomsSection() {
       type: room.type || "SINGLE",
       amenities: Array.isArray(room.amenities) ? room.amenities.join(", ") : "",
       contactPhone: room.contactPhone || "",
+      deposit: room.deposit ?? "",
+      electricityPrice: room.electricityPrice ?? "",
+      waterPrice: room.waterPrice ?? "",
       imageUrl: roomImage(room)
     });
   }
@@ -362,6 +382,9 @@ function LandlordRoomsSection() {
       ...roomForm,
       price: Number(roomForm.price),
       area: Number(roomForm.area),
+      deposit: Number(roomForm.deposit),
+      electricityPrice: Number(roomForm.electricityPrice),
+      waterPrice: Number(roomForm.waterPrice),
       amenities: roomForm.amenities.split(",").map((x) => x.trim()).filter(Boolean),
       images: [{ url: roomForm.imageUrl, alt: roomForm.title }]
     };
@@ -380,6 +403,9 @@ function LandlordRoomsSection() {
         <Field label="Tiêu đề phòng"><TextInput value={roomForm.title} onChange={(e) => setRoomForm((v) => ({ ...v, title: e.target.value }))} /></Field>
         <Field label="Giá thuê"><TextInput type="number" value={roomForm.price} onChange={(e) => setRoomForm((v) => ({ ...v, price: e.target.value }))} /></Field>
         <Field label="Diện tích"><TextInput type="number" value={roomForm.area} onChange={(e) => setRoomForm((v) => ({ ...v, area: e.target.value }))} /></Field>
+        <Field label="Tiền cọc"><TextInput type="number" value={roomForm.deposit} onChange={(e) => setRoomForm((v) => ({ ...v, deposit: e.target.value }))} /></Field>
+        <Field label="Giá điện (VND/kWh)"><TextInput type="number" value={roomForm.electricityPrice} onChange={(e) => setRoomForm((v) => ({ ...v, electricityPrice: e.target.value }))} /></Field>
+        <Field label="Giá nước (VND/m³)"><TextInput type="number" value={roomForm.waterPrice} onChange={(e) => setRoomForm((v) => ({ ...v, waterPrice: e.target.value }))} /></Field>
         <Field label="Địa chỉ"><TextInput value={roomForm.address} onChange={(e) => setRoomForm((v) => ({ ...v, address: e.target.value }))} /></Field>
         <Field label="Khu vực"><TextInput value={roomForm.district} onChange={(e) => setRoomForm((v) => ({ ...v, district: e.target.value }))} /></Field>
         <Field label="Loại phòng"><Select value={roomForm.type} onChange={(e) => setRoomForm((v) => ({ ...v, type: e.target.value }))}><option value="SINGLE">Phòng đơn</option><option value="SHARED">Ở ghép</option><option value="APARTMENT">Căn hộ</option><option value="OTHER">Khác</option></Select></Field>
@@ -1115,14 +1141,17 @@ function DashboardPage() {
     }
     if (user.role === "ADMIN") return <AdminSection />;
     return (
-      <Card title="Danh mục quản lý sinh viên" description="Các chức năng được tách riêng để dễ theo dõi tin nhắn, báo cáo và thông tin tài khoản.">
-        <div className="grid gap-4 md:grid-cols-2">
-          <ManagementCard title="Nhắn tin" description="Xem và tiếp tục trao đổi với chủ trọ." to="/dashboard/messages" />
-          <ManagementCard title="Báo cáo của tôi" description="Theo dõi tình trạng các báo cáo vi phạm đã gửi." to="/dashboard/reports" />
-          <ManagementCard title="Thông tin cá nhân" description="Cập nhật hồ sơ và đổi mật khẩu." to="/dashboard/profile" />
-          <ManagementCard title="Thông báo" description="Xem các thông báo mới từ hệ thống." to="/dashboard/notifications" />
-        </div>
-      </Card>
+      <>
+        <NotificationsSection user={user} />
+        <Card title="Danh mục quản lý sinh viên" description="Các chức năng được tách riêng để dễ theo dõi tin nhắn, báo cáo và thông tin tài khoản.">
+          <div className="grid gap-4 md:grid-cols-2">
+            <ManagementCard title="Nhắn tin" description="Xem và tiếp tục trao đổi với chủ trọ." to="/dashboard/messages" />
+            <ManagementCard title="Báo cáo của tôi" description="Theo dõi tình trạng các báo cáo vi phạm đã gửi." to="/dashboard/reports" />
+            <ManagementCard title="Thông tin cá nhân" description="Cập nhật hồ sơ và đổi mật khẩu." to="/dashboard/profile" />
+            <ManagementCard title="Thông báo" description="Xem các thông báo mới từ hệ thống." to="/dashboard/notifications" />
+          </div>
+        </Card>
+      </>
     );
   }
 

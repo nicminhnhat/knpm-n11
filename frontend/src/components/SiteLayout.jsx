@@ -33,7 +33,8 @@ function getManagementLinks(role) {
       { label: "Xác minh tài khoản", to: "/dashboard/verification" },
       { label: "Quản lý phòng trọ", to: "/dashboard/rooms" },
       { label: "Quản lý bài đăng", to: "/dashboard/posts" },
-      { label: "Nhắn tin", to: "/dashboard/messages" }
+      { label: "Nhắn tin", to: "/dashboard/messages" },
+      { label: "Thông báo", to: "/dashboard/notifications" }
     ];
   }
 
@@ -50,7 +51,8 @@ function getManagementLinks(role) {
   return [
     { label: "Nhắn tin", to: "/dashboard/messages" },
     { label: "Báo cáo của tôi", to: "/dashboard/reports" },
-    { label: "Thông tin cá nhân", to: "/dashboard/profile" }
+    { label: "Thông tin cá nhân", to: "/dashboard/profile" },
+    { label: "Thông báo", to: "/dashboard/notifications" }
   ];
 }
 
@@ -389,3 +391,5 @@ function SiteLayout() {
 }
 
 export default SiteLayout;
+
+
