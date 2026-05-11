@@ -1002,10 +1002,80 @@ function AdminSection({ mode }) {
   );
 }
 
-function NotificationsSection() {
+function parseSupportNotification(rawContent) {
+  const raw = String(rawContent || "");
+  const marker = "__SUPPORT_META__";
+  if (!raw.startsWith(marker)) return { meta: null, message: raw };
+  const splitAt = raw.indexOf("\n");
+  if (splitAt < 0) return { meta: null, message: raw };
+  try {
+    const meta = JSON.parse(raw.slice(marker.length, splitAt));
+    return { meta, message: raw.slice(splitAt + 1).trim() };
+  } catch (_error) {
+    return { meta: null, message: raw };
+  }
+}
+
+function NotificationsSection({ user }) {
+  const action = useActionDialog();
   const [notifications, setNotifications] = useState([]);
-  useEffect(() => { authRequest("/api/notifications").then((r) => setNotifications(r.notifications || [])).catch(() => { }); }, []);
-  return <Card title="Thông báo"><div className="grid gap-3">{notifications.length ? notifications.map((n) => <div key={n.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5"><p className="text-lg font-extrabold text-[color:var(--ink)]">{n.title}</p><p className="mt-1 text-sm text-[color:var(--muted)]">{n.content}</p></div>) : <p className="text-sm text-[color:var(--muted)]">Chưa có thông báo.</p>}</div></Card>;
+  const [replyById, setReplyById] = useState({});
+
+  async function loadNotifications() {
+    const response = await authRequest("/api/notifications");
+    setNotifications(response.notifications || []);
+  }
+
+  useEffect(() => { loadNotifications().catch(() => { }); }, []);
+
+  async function sendReply(notificationId) {
+    const content = String(replyById[notificationId] || "").trim();
+    if (!content) {
+      action.warn("Vui lòng nhập nội dung phản hồi.");
+      return;
+    }
+    const ok = await action.run(
+      () => authRequest(`/api/notifications/${notificationId}/reply`, { method: "POST", body: JSON.stringify({ content }) }),
+      "Đã gửi phản hồi.",
+      loadNotifications
+    );
+    if (ok) {
+      setReplyById((current) => ({ ...current, [notificationId]: "" }));
+    }
+  }
+
+  return (
+    <Card title="Thông báo">
+      {action.modal}
+      <div className="grid gap-3">
+        {notifications.length ? notifications.map((notification) => {
+          const parsed = parseSupportNotification(notification.content);
+          const isSupportNotification = String(notification.type || "").startsWith("SUPPORT_") || String(notification.title || "").includes("[Lien he ho tro]") || String(notification.title || "").includes("[Phan hoi ho tro]");
+          const canReply = isSupportNotification && (!parsed.meta?.targetUserId || parsed.meta.targetUserId !== user.id);
+          const canReplyLabel = canReply ? "Phản hồi" : "";
+          return (
+            <div key={notification.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
+              <p className="text-lg font-extrabold text-[color:var(--ink)]">{notification.title}</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">{parsed.message}</p>
+              {canReply ? (
+                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    className="input-shell"
+                    placeholder="Nhập phản hồi..."
+                    value={replyById[notification.id] || ""}
+                    onChange={(event) => setReplyById((current) => ({ ...current, [notification.id]: event.target.value }))}
+                  />
+                  <button className="button-secondary" type="button" onClick={() => sendReply(notification.id)}>
+                    {canReplyLabel}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          );
+        }) : <p className="text-sm text-[color:var(--muted)]">Chưa có thông báo.</p>}
+      </div>
+    </Card>
+  );
 }
 
 function DashboardPage() {
@@ -1038,7 +1108,7 @@ function DashboardPage() {
     if (user.role === "LANDLORD") {
       return (
         <>
-          <NotificationsSection />
+          <NotificationsSection user={user} />
           <ProfileSection user={user} refreshUser={refreshUser} />
         </>
       );
@@ -1059,7 +1129,7 @@ function DashboardPage() {
   function renderSection() {
     if (!section) return renderOverview();
     if (section === "profile") return <ProfileSection user={user} refreshUser={refreshUser} />;
-    if (section === "notifications") return <NotificationsSection />;
+    if (section === "notifications") return <NotificationsSection user={user} />;
     if (section === "messages") return <MessagesSection />;
 
     if (user.role === "LANDLORD") {

@@ -1,27 +1,133 @@
 const prisma = require("../lib/prisma");
+const crypto = require("crypto");
 const { userSelect } = require("../utils/constants");
+
+function buildSupportContent(meta, message) {
+  return `__SUPPORT_META__${JSON.stringify(meta)}\n${message}`;
+}
+
+function parseSupportContent(content) {
+  const raw = String(content || "");
+  if (!raw.startsWith("__SUPPORT_META__")) return { meta: null, message: raw };
+  const newLine = raw.indexOf("\n");
+  if (newLine < 0) return { meta: null, message: raw };
+  const json = raw.slice("__SUPPORT_META__".length, newLine).trim();
+  const message = raw.slice(newLine + 1).trim();
+  try {
+    return { meta: JSON.parse(json), message };
+  } catch (_error) {
+    return { meta: null, message: raw };
+  }
+}
+
+function parseLegacySupportBody(message) {
+  const text = String(message || "");
+  const senderMatch = text.match(/Nguoi gui:\s*([^(|]+)\s*\(([^)]+)\)/i);
+  const contactMatch = text.match(/Lien he:\s*([^|]+)/i);
+  return {
+    senderName: senderMatch?.[1]?.trim() || "Khach",
+    senderRole: senderMatch?.[2]?.trim() || "GUEST",
+    senderContact: contactMatch?.[1]?.trim() || ""
+  };
+}
 
 class InteractionService {
   // CONTACT SUPPORT
-  async createContactRequest({ fullName, contact, content, senderRole = "GUEST" }) {
+  async createContactRequest({ fullName, contact, content, senderRole = "GUEST", senderUserId = null }) {
     const admins = await prisma.user.findMany({
       where: { role: "ADMIN", status: "ACTIVE" },
       select: { id: true }
     });
     if (!admins.length) return 0;
 
+    const conversationId = crypto.randomUUID();
     const title = `[Lien he ho tro] ${fullName}`;
     const body = `Nguoi gui: ${fullName} (${senderRole}) | Lien he: ${contact} | Noi dung: ${content}`;
+    const adminRows = admins.map((admin) => ({
+      userId: admin.id,
+      type: "SUPPORT_CONTACT",
+      title,
+      content: buildSupportContent({
+        conversationId,
+        senderName: fullName,
+        senderRole,
+        senderContact: contact,
+        senderUserId,
+        targetUserId: senderUserId || null
+      }, body)
+    }));
+
+    const userRows = senderUserId ? [{
+      userId: senderUserId,
+      type: "SUPPORT_CONTACT",
+      title: "[Lien he ho tro] Yeu cau da duoc gui",
+      content: buildSupportContent({
+        conversationId,
+        senderName: fullName,
+        senderRole,
+        senderContact: contact,
+        senderUserId,
+        targetUserId: admins[0].id
+      }, "Yeu cau ho tro cua ban da duoc gui den quan tri vien. Ban co the tiep tuc tra loi tai muc Thong bao.")
+    }] : [];
+
     const result = await prisma.notification.createMany({
-      data: admins.map((admin) => ({
-        userId: admin.id,
-        type: "SUPPORT_CONTACT",
-        title,
-        content: body
-      }))
+      data: [...adminRows, ...userRows]
     });
 
     return result.count || 0;
+  }
+
+  async replySupportNotification(notificationId, userId, replyContent) {
+    const notification = await prisma.notification.findFirst({ where: { id: notificationId, userId } });
+    if (!notification) return { error: "not_found" };
+
+    const parsed = parseSupportContent(notification.content);
+    const fallback = parseLegacySupportBody(parsed.message);
+    const meta = parsed.meta || {
+      conversationId: `legacy-${notification.id}`,
+      senderName: fallback.senderName,
+      senderRole: fallback.senderRole,
+      senderContact: fallback.senderContact,
+      senderUserId: null,
+      targetUserId: null
+    };
+
+    const receiverId = meta.targetUserId;
+
+    const sender = await prisma.user.findUnique({ where: { id: userId }, select: userSelect });
+    if (!sender) return { error: "sender_not_found" };
+
+    const senderLabel = sender.fullName || "Nguoi dung";
+    const title = `[Phan hoi ho tro] ${senderLabel}`;
+    const body = `${senderLabel} (${sender.role}) phan hoi: ${replyContent}`;
+
+    if (!receiverId || receiverId === userId) {
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: "SUPPORT_REPLY_INTERNAL",
+          title: "[Phan hoi ho tro] Da ghi nhan phan hoi cho khach",
+          content: buildSupportContent(
+            { ...meta, targetUserId: null },
+            `${body}${meta.senderContact ? ` | Lien he khach: ${meta.senderContact}` : ""}`
+          )
+        }
+      });
+      return { success: true, internalOnly: true };
+    }
+
+    const nextMetaForReceiver = { ...meta, targetUserId: userId };
+    const nextMetaForSender = { ...meta, targetUserId: receiverId };
+
+    await prisma.notification.createMany({
+      data: [
+        { userId: receiverId, type: "SUPPORT_REPLY", title, content: buildSupportContent(nextMetaForReceiver, body) },
+        { userId, type: "SUPPORT_REPLY", title: "[Phan hoi ho tro] Ban da gui phan hoi", content: buildSupportContent(nextMetaForSender, `Ban vua gui: ${replyContent}`) }
+      ]
+    });
+
+    return { success: true };
   }
 
   // REPORTS

@@ -20,6 +20,19 @@ async function authenticateToken(req, res, next) {
   }
 }
 
+async function optionalAuthenticateToken(req, _res, next) {
+  try {
+    const token = getBearerToken(req.headers.authorization || "");
+    if (!token) return next();
+    const payload = verifyToken(token);
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    if (user && user.status === "ACTIVE") req.user = user;
+    return next();
+  } catch (_error) {
+    return next();
+  }
+}
+
 function authorizeRoles(...roles) {
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ success: false, message: "Bạn cần đăng nhập." });
@@ -37,4 +50,4 @@ function requireVerifiedLandlord(req, res, next) {
   return next();
 }
 
-module.exports = { authenticateToken, authorizeRoles, requireVerifiedLandlord };
+module.exports = { authenticateToken, optionalAuthenticateToken, authorizeRoles, requireVerifiedLandlord };
