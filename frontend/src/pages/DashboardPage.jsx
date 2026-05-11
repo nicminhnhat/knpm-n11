@@ -1134,14 +1134,22 @@ function DashboardPage() {
     if (user.role === "LANDLORD") {
       return (
         <>
-          <NotificationsSection user={user} />
+          <ProfileSection user={user} refreshUser={refreshUser} />
+          <LandlordSection />
+        </>
+      );
+    }
+    if (user.role === "ADMIN") {
+      return (
+        <>
+          <AdminSection />
           <ProfileSection user={user} refreshUser={refreshUser} />
         </>
       );
     }
-    if (user.role === "ADMIN") return <AdminSection />;
     return (
       <>
+        <ProfileSection user={user} refreshUser={refreshUser} />
         <NotificationsSection user={user} />
         <Card title="Danh mục quản lý sinh viên" description="Các chức năng được tách riêng để dễ theo dõi tin nhắn, báo cáo và thông tin tài khoản.">
           <div className="grid gap-4 md:grid-cols-2">

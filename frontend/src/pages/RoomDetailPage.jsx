@@ -15,6 +15,8 @@ function useFeedback() {
   function closeDialog() { setDialog(null); }
   function notify(type, title, message) { setDialog({ type, title, message }); }
   function warn(message) { notify("warning", "Cần bổ sung thông tin", message); }
+  function confirm(title, message, onConfirm, confirmLabel = "Gửi") { setDialog({ type: "confirm", title, message, confirmLabel, cancelLabel: "Hủy", onConfirm }); }
+  async function confirmAction() { const callback = dialog?.onConfirm; closeDialog(); if (callback) await callback(); }
   async function run(callback, successMessage, onSuccess) {
     try {
       await callback();
@@ -24,7 +26,7 @@ function useFeedback() {
       notify("error", "Không thể thực hiện", error.message || "Thao tác thất bại. Vui lòng thử lại.");
     }
   }
-  return { modal: <FeedbackModal dialog={dialog} onClose={closeDialog} />, run, warn, notify };
+  return { modal: <FeedbackModal dialog={dialog} onClose={closeDialog} onConfirm={confirmAction} />, run, warn, notify, confirm };
 }
 
 function RoomDetailPage() {
@@ -280,10 +282,15 @@ function RoomDetailPage() {
                       feedback.warn("Vui lòng chọn lý do báo cáo.");
                       return;
                     }
-                    feedback.run(
-                      () => authRequest("/api/reports", { method: "POST", body: JSON.stringify({ postId: approvedPost.id, ...reportForm }) }),
-                      "Báo cáo đã được gửi đến quản trị viên.",
-                      loadRoom
+                    feedback.confirm(
+                      "Xác nhận gửi báo cáo",
+                      "Bạn có chắc chắn muốn gửi báo cáo này không?",
+                      () => feedback.run(
+                        () => authRequest("/api/reports", { method: "POST", body: JSON.stringify({ postId: approvedPost.id, ...reportForm }) }),
+                        "Báo cáo đã được gửi đến quản trị viên.",
+                        loadRoom
+                      ),
+                      "Gửi"
                     );
                   }}>
                     <select className="input-shell" value={reportForm.reason} onChange={(e) => setReportForm((v) => ({ ...v, reason: e.target.value }))}>
