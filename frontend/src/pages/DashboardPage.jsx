@@ -643,7 +643,7 @@ function MessagesSection() {
       {action.modal}
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-3">
-          {threads.map((thread) => <button key={thread.id} className={`w-full rounded-[1.2rem] border p-4 text-left text-sm transition ${selected?.id === thread.id ? "border-[color:var(--brand)] bg-orange-50" : "border-[color:var(--line)] bg-white hover:border-[color:var(--brand)]"}`} onClick={() => { setSelected(thread); loadMessages(thread.id); }}><strong className="text-base text-[color:var(--ink)]">{thread.room?.title || thread.post?.title || "Cuộc trò chuyện"}</strong><p className="mt-1 text-[color:var(--muted)]">Sinh viên: {thread.student?.fullName} · Chủ trọ: {thread.landlord?.fullName}</p></button>)}
+          {threads.map((thread) => <button key={thread.id} className={`w-full rounded-[1.2rem] border p-4 text-left text-sm transition ${selected?.id === thread.id ? "border-[color:var(--brand)] bg-orange-50" : "border-[color:var(--line)] bg-white hover:border-[color:var(--brand)]"}`} onClick={() => { setSelected(thread); loadMessages(thread.id); }}><strong className="text-base text-[color:var(--ink)]">{thread.room?.title || thread.post?.title || "Cuộc trò chuyện"}</strong><div className="mt-2 grid gap-1 text-[color:var(--muted)]"><p><strong className="text-[color:var(--ink)]">Sinh viên:</strong> {thread.student?.fullName || "Chưa cập nhật"}</p><p><strong className="text-[color:var(--ink)]">Chủ trọ:</strong> {thread.landlord?.fullName || "Chưa cập nhật"}</p></div></button>)}
           {!threads.length ? <p className="text-sm text-[color:var(--muted)]">Chưa có cuộc trò chuyện.</p> : null}
         </div>
         <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
@@ -916,7 +916,10 @@ function AdminSection({ mode }) {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
                     <p className="text-xl font-extrabold text-[color:var(--ink)]">{post.title}</p>
-                    <p className="text-sm text-[color:var(--muted)]">{post.landlord?.fullName} · {post.room?.address || "Chưa cập nhật địa chỉ"}</p>
+                    <div className="grid gap-1 text-sm text-[color:var(--muted)]">
+                      <p><strong className="text-[color:var(--ink)]">Chủ trọ:</strong> {post.landlord?.fullName || "Không rõ"}</p>
+                      <p><strong className="text-[color:var(--ink)]">Địa chỉ:</strong> {post.room?.address || "Chưa cập nhật"}</p>
+                    </div>
                     <div className="flex flex-wrap gap-2 pt-1 text-xs font-bold">
                       <span className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-700">Chủ trọ: {post.landlord?.fullName || "Không rõ"}</span>
                       <span className="rounded-full bg-violet-100 px-3 py-1.5 text-violet-700">Phòng: {post.room?.title || "Không gắn phòng"}</span>
@@ -1007,7 +1010,10 @@ function AdminSection({ mode }) {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <p className="text-xl font-extrabold text-[color:var(--ink)]">{report.reason}</p>
-                    <p className="mt-1 text-sm text-[color:var(--muted)]">Người báo cáo: {report.reporter?.fullName} · Bài đăng: {report.post?.title}</p>
+                    <div className="mt-2 grid gap-1 text-sm text-[color:var(--muted)]">
+                      <p><strong className="text-[color:var(--ink)]">Người báo cáo:</strong> {report.reporter?.fullName || "Không rõ"}</p>
+                      <p><strong className="text-[color:var(--ink)]">Bài đăng:</strong> {report.post?.title || "Không rõ"}</p>
+                    </div>
                     <p className="mt-1 text-sm text-[color:var(--muted)]">{report.content}</p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
                       <span className={`rounded-full px-3 py-1.5 ${report.status === "RESOLVED" ? "bg-emerald-100 text-emerald-700" : report.status === "PENDING" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(report.status)}</span>
