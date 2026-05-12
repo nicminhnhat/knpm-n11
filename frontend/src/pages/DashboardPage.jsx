@@ -974,7 +974,11 @@ function AdminSection({ mode }) {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <p className="text-xl font-extrabold text-[color:var(--ink)]">{v.fullName}</p>
-                    <p className="mt-1 text-sm text-[color:var(--muted)]">{v.phone} · {v.address} · {v.documentType}: {v.documentNumber}</p>
+                    <div className="mt-2 grid gap-2 text-sm text-[color:var(--muted)] sm:grid-cols-2">
+                      <p><strong className="text-[color:var(--ink)]">SĐT:</strong> {v.phone || "Chưa cập nhật"}</p>
+                      <p><strong className="text-[color:var(--ink)]">Địa chỉ:</strong> {v.address || "Chưa cập nhật"}</p>
+                      <p className="sm:col-span-2"><strong className="text-[color:var(--ink)]">{v.documentType || "Giấy tờ"}:</strong> {v.documentNumber || "Chưa cập nhật"}</p>
+                    </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
                       <span className={`rounded-full px-3 py-1.5 ${v.status === "VERIFIED" ? "bg-emerald-100 text-emerald-700" : v.status === "PENDING" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(v.status)}</span>
                     </div>
