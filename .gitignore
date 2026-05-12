@@ -12,6 +12,7 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+!frontend/.env.production.example
 
 # ========================
 # Build output (Vite)

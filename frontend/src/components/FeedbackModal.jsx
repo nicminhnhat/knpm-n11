@@ -1,4 +1,13 @@
+import { useEffect, useState } from "react";
+import CustomSelect from "./CustomSelect.jsx";
+
 function FeedbackModal({ dialog, onClose, onConfirm, onSubmitText }) {
+  const [selectValue, setSelectValue] = useState("");
+
+  useEffect(() => {
+    setSelectValue(dialog?.defaultValue || dialog?.options?.[0]?.value || "");
+  }, [dialog]);
+
   if (!dialog) return null;
 
   const typeStyle = {
@@ -37,7 +46,7 @@ function FeedbackModal({ dialog, onClose, onConfirm, onSubmitText }) {
   function handleSubmit(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const value = String(form.get("value") || "").trim();
+    const value = dialog.type === "select" ? String(selectValue || "").trim() : String(form.get("value") || "").trim();
     if (dialog.required && !value) return;
     onSubmitText?.(value);
   }
@@ -58,9 +67,12 @@ function FeedbackModal({ dialog, onClose, onConfirm, onSubmitText }) {
         {dialog.type === "input" || dialog.type === "select" ? (
           <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
             {dialog.type === "select" ? (
-              <select className="input-shell" name="value" defaultValue={dialog.defaultValue || ""}>
-                {dialog.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-              </select>
+              <CustomSelect
+                options={dialog.options || []}
+                placeholder="Chọn lựa chọn"
+                value={selectValue}
+                onValueChange={setSelectValue}
+              />
             ) : dialog.multiline ? (
               <textarea
                 autoFocus

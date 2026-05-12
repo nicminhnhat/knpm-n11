@@ -31,7 +31,9 @@ class LandlordController {
     const data = roomData(req.body, current);
     const error = validateRoom(data);
     if (error) return fail(res, 400, error);
-    const room = await landlordService.updateRoom(current.id, data);
+    const images = Array.isArray(req.body.images) ? req.body.images : undefined;
+    const normalizedImages = Array.isArray(images) ? images.map((img, index) => ({ url: clean(img.url), alt: opt(img.alt), sortOrder: intNum(img.sortOrder, index) })) : undefined;
+    const room = await landlordService.updateRoom(current.id, data, normalizedImages);
     return ok(res, { message: "Cập nhật thông tin phòng trọ thành công.", room });
   }
 
@@ -81,10 +83,10 @@ class LandlordController {
     const room = await landlordService.getRoomById(roomId, req.user.id);
     if (!room) return fail(res, 404, "Không tìm thấy phòng trọ thuộc quyền quản lý của bạn.");
 
-    const normalizedImages = [
+    const normalizedImages = Array.from(new Map([
       ...(imageUrl ? [{ url: imageUrl, alt: title }] : []),
-      ...images.filter((img) => img && img.url).map((img) => ({ url: clean(img.url), alt: opt(img.alt) || title }))
-    ];
+      ...images.filter((img) => img && img.url).map((img, index) => ({ url: clean(img.url), alt: opt(img.alt) || title, sortOrder: intNum(img.sortOrder, index) }))
+    ].map((img) => [img.url, img])).values());
 
     const post = await landlordService.createPost(req.user.id, roomId, title, description, normalizedImages);
     return ok(res, { message: "Tạo bài đăng thành công. Bài đăng đang chờ admin kiểm duyệt.", post }, 201);
@@ -97,6 +99,12 @@ class LandlordController {
     const title = clean(req.body.title || req.body.tieuDe || current.title);
     const description = clean(req.body.description || req.body.moTa || current.description);
     const roomId = clean(req.body.roomId || req.body.maPhongTro || current.roomId);
+    const imageUrl = opt(req.body.imageUrl || req.body.hinhAnh);
+    const images = Array.isArray(req.body.images) ? req.body.images : undefined;
+    const normalizedImages = Array.isArray(images) ? Array.from(new Map([
+      ...(imageUrl ? [{ url: imageUrl, alt: title }] : []),
+      ...images.filter((img) => img && img.url).map((img, index) => ({ url: clean(img.url), alt: opt(img.alt) || title, sortOrder: intNum(img.sortOrder, index) }))
+    ].map((img) => [img.url, img])).values()) : undefined;
     
     if (title.length < 5) return fail(res, 400, "Tiêu đề bài đăng phải có ít nhất 5 ký tự.");
     if (description.length < 10) return fail(res, 400, "Mô tả bài đăng phải có ít nhất 10 ký tự.");
@@ -104,7 +112,7 @@ class LandlordController {
     const room = await landlordService.getRoomById(roomId, req.user.id);
     if (!room) return fail(res, 404, "Không tìm thấy phòng trọ thuộc quyền quản lý của bạn.");
     
-    const post = await landlordService.updatePost(current.id, { title, description, roomId, status: "PENDING", rejectReason: null, hiddenAt: null });
+    const post = await landlordService.updatePost(current.id, { title, description, roomId, status: "PENDING", rejectReason: null, hiddenAt: null }, normalizedImages);
     return ok(res, { message: "Cập nhật bài đăng thành công. Bài đăng chuyển về trạng thái chờ duyệt.", post });
   }
 

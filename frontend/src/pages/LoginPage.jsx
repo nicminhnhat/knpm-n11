@@ -74,7 +74,7 @@ function LoginPage() {
               />
 
               <div className="flex justify-end text-sm text-[color:var(--muted)]">
-                <Link className="font-semibold text-[color:var(--brand)]" to="/contact">Quên mật khẩu?</Link>
+                <Link className="font-semibold text-[color:var(--brand)]" to="/forgot-password">Quên mật khẩu?</Link>
               </div>
 
               {errorMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div> : null}

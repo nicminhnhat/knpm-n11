@@ -1,10 +1,39 @@
+﻿import { useState } from "react";
 import FormField from "../components/FormField.jsx";
 import { contactCards } from "../data/siteData.js";
 import { Icon } from "../components/Icons.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import SectionHeader from "../components/SectionHeader.jsx";
+import { apiRequest } from "../lib/api.js";
 
 function ContactPage() {
+  const [form, setForm] = useState({ fullName: "", contact: "", content: "" });
+  const [isSending, setIsSending] = useState(false);
+  const [notice, setNotice] = useState({ type: "", message: "" });
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (!form.fullName.trim() || !form.contact.trim() || !form.content.trim()) {
+      setNotice({ type: "error", message: "Vui lòng nhập đầy đủ thông tin trước khi gửi liên hệ." });
+      return;
+    }
+
+    try {
+      setIsSending(true);
+      setNotice({ type: "", message: "" });
+      await apiRequest("/api/contact", {
+        method: "POST",
+        body: JSON.stringify(form)
+      });
+      setNotice({ type: "success", message: "Đã gửi liên hệ thành công. Admin sẽ phản hồi sớm." });
+      setForm({ fullName: "", contact: "", content: "" });
+    } catch (error) {
+      setNotice({ type: "error", message: error.message || "Không thể gửi liên hệ. Vui lòng thử lại." });
+    } finally {
+      setIsSending(false);
+    }
+  }
+
   return (
     <>
       <PageIntro
@@ -29,21 +58,21 @@ function ContactPage() {
           />
 
           <div className="grid gap-6 lg:grid-cols-3">
-          {contactCards.map((item) => (
-            <a
-              key={item.title}
-              className="panel-soft p-6 transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(23,50,77,0.1)]"
-              href={item.href}
-              rel="noreferrer"
-              target={item.href.startsWith("http") ? "_blank" : undefined}
-            >
-              <div className="mb-4 inline-flex rounded-2xl bg-[color:var(--accent-soft)] p-3 text-[color:var(--brand)]">
-                <Icon className="h-5 w-5" name={item.icon} />
-              </div>
-              <h2 className="text-xl font-bold text-[color:var(--ink)]">{item.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.content}</p>
-            </a>
-          ))}
+            {contactCards.map((item) => (
+              <a
+                key={item.title}
+                className="panel-soft p-6 transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(23,50,77,0.1)]"
+                href={item.href}
+                rel="noreferrer"
+                target={item.href.startsWith("http") ? "_blank" : undefined}
+              >
+                <div className="mb-4 inline-flex rounded-2xl bg-[color:var(--accent-soft)] p-3 text-[color:var(--brand)]">
+                  <Icon className="h-5 w-5" name={item.icon} />
+                </div>
+                <h2 className="text-xl font-bold text-[color:var(--ink)]">{item.title}</h2>
+                <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.content}</p>
+              </a>
+            ))}
           </div>
         </div>
       </section>
@@ -56,16 +85,33 @@ function ContactPage() {
               title="Gửi nội dung cần hỗ trợ"
               description="Nhập thông tin liên hệ và nội dung cần được hỗ trợ."
             />
-            <form className="mt-8 grid gap-4" onSubmit={(event) => event.preventDefault()}>
-              <FormField label="Họ và tên" placeholder="Họ và tên" />
-              <FormField label="Email hoặc số điện thoại" placeholder="Email hoặc số điện thoại" />
+            <form className="mt-8 grid gap-4" onSubmit={handleSubmit}>
+              <FormField
+                label="Họ và tên"
+                placeholder="Họ và tên"
+                value={form.fullName}
+                onChange={(event) => setForm((prev) => ({ ...prev, fullName: event.target.value }))}
+              />
+              <FormField
+                label="Email hoặc số điện thoại"
+                placeholder="Email hoặc số điện thoại"
+                value={form.contact}
+                onChange={(event) => setForm((prev) => ({ ...prev, contact: event.target.value }))}
+              />
               <FormField
                 label="Nội dung cần hỗ trợ"
                 placeholder="Bạn đang cần hỗ trợ về tìm phòng, đăng tin hay kết nối với chủ trọ?"
                 textarea
+                value={form.content}
+                onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
               />
-              <button className="button-primary w-full sm:w-fit" type="submit">
-                Gửi liên hệ
+              {notice.message ? (
+                <div className={`rounded-2xl px-4 py-3 text-sm ${notice.type === "success" ? "border border-emerald-200 bg-emerald-50 text-emerald-700" : "border border-red-200 bg-red-50 text-red-700"}`}>
+                  {notice.message}
+                </div>
+              ) : null}
+              <button className="button-primary w-full sm:w-fit" disabled={isSending} type="submit">
+                {isSending ? "Đang gửi..." : "Gửi liên hệ"}
               </button>
             </form>
           </div>

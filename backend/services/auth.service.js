@@ -1,7 +1,10 @@
 const prisma = require("../lib/prisma");
 const { hashPassword, comparePassword } = require("../lib/auth");
 
-const resetOtps = new Map();
+function otpExpiryDate() {
+  const minutes = Number(process.env.RESET_OTP_EXPIRES_MINUTES || 5);
+  return new Date(Date.now() + Math.max(minutes, 1) * 60 * 1000);
+}
 
 class AuthService {
   async findUserByEmailOrPhone(email, phone) {
@@ -29,20 +32,77 @@ class AuthService {
     return prisma.user.update({ where: { email }, data: { passwordHash } });
   }
 
-  createOtp(email) {
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-    resetOtps.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+  createOtpCode() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+  }
+
+  async createPasswordResetOtp(user) {
+    const otp = this.createOtpCode();
+    const otpHash = await hashPassword(otp);
+
+    await prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, used: false },
+      data: { used: true }
+    });
+
+    await prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        email: user.email,
+        otpHash,
+        expiresAt: otpExpiryDate()
+      }
+    });
+
     return otp;
   }
 
-  verifyOtp(email, otp) {
-    const info = resetOtps.get(email);
-    if (!info || info.otp !== otp || info.expiresAt < Date.now()) return false;
+  async getValidPasswordResetToken(email, otp) {
+    if (!email || !otp) return null;
+
+    const candidates = await prisma.passwordResetToken.findMany({
+      where: {
+        email,
+        used: false,
+        expiresAt: { gt: new Date() }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5
+    });
+
+    for (const token of candidates) {
+      if (await comparePassword(otp, token.otpHash)) return token;
+    }
+
+    return null;
+  }
+
+  async verifyPasswordResetOtp(email, otp) {
+    return Boolean(await this.getValidPasswordResetToken(email, otp));
+  }
+
+  async resetPasswordWithOtp(email, otp, newPassword) {
+    const token = await this.getValidPasswordResetToken(email, otp);
+    if (!token) return false;
+
+    const passwordHash = await hashPassword(newPassword);
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: token.userId }, data: { passwordHash } }),
+      prisma.passwordResetToken.update({ where: { id: token.id }, data: { used: true } })
+    ]);
+
     return true;
   }
 
-  deleteOtp(email) {
-    resetOtps.delete(email);
+  async cleanupExpiredPasswordResetTokens() {
+    return prisma.passwordResetToken.deleteMany({
+      where: {
+        OR: [
+          { used: true },
+          { expiresAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
+        ]
+      }
+    });
   }
 }
 

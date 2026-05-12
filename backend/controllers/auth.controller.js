@@ -1,4 +1,5 @@
 const authService = require("../services/auth.service");
+const emailService = require("../services/email.service");
 const { signToken, toPublicUser } = require("../lib/auth");
 const { ok, fail, clean, opt, emailOf, isEmail, validatePassword } = require("../utils/helpers");
 
@@ -55,23 +56,52 @@ class AuthController {
   async forgotPassword(req, res) {
     const email = emailOf(req.body.email);
     if (!isEmail(email)) return fail(res, 400, "Email không hợp lệ.");
+
+    const genericMessage = "Nếu email tồn tại trong hệ thống, mã xác nhận đã được gửi.";
     const user = await authService.findUserByEmail(email);
-    if (!user) return fail(res, 404, "Tài khoản không tồn tại.");
-    const otp = authService.createOtp(email);
-    return ok(res, { message: "Mã OTP đã được tạo. Bản local trả mã để kiểm thử.", devOtp: process.env.NODE_ENV === "production" ? undefined : otp });
+
+    if (!user || user.status !== "ACTIVE") {
+      return ok(res, { message: genericMessage });
+    }
+
+    const otp = await authService.createPasswordResetOtp(user);
+    const mailResult = await emailService.sendPasswordResetOtp(user.email, otp);
+    await authService.cleanupExpiredPasswordResetTokens().catch(() => null);
+
+    return ok(res, {
+      message: genericMessage,
+      devOtp: process.env.NODE_ENV === "production" || mailResult.sent ? undefined : otp
+    });
+  }
+
+  async verifyResetOtp(req, res) {
+    const email = emailOf(req.body.email);
+    const otp = clean(req.body.otp);
+
+    if (!isEmail(email)) return fail(res, 400, "Email không hợp lệ.");
+    if (!/^\d{6}$/.test(otp)) return fail(res, 400, "Mã OTP phải gồm 6 chữ số.");
+
+    const isValid = await authService.verifyPasswordResetOtp(email, otp);
+    if (!isValid) return fail(res, 400, "Mã xác nhận không đúng hoặc đã hết hạn.");
+
+    return ok(res, { message: "Mã xác nhận hợp lệ." });
   }
 
   async resetPassword(req, res) {
     const email = emailOf(req.body.email);
     const otp = clean(req.body.otp);
     const newPassword = typeof req.body.newPassword === "string" ? req.body.newPassword : "";
-    
-    if (!authService.verifyOtp(email, otp)) return fail(res, 400, "Mã xác thực không đúng hoặc đã hết hạn.");
+    const confirmPassword = typeof req.body.confirmPassword === "string" ? req.body.confirmPassword : "";
+
+    if (!isEmail(email)) return fail(res, 400, "Email không hợp lệ.");
+    if (!/^\d{6}$/.test(otp)) return fail(res, 400, "Mã OTP phải gồm 6 chữ số.");
     if (!validatePassword(newPassword)) return fail(res, 400, "Mật khẩu mới phải có ít nhất 6 ký tự.");
-    
-    await authService.updatePassword(email, newPassword);
-    authService.deleteOtp(email);
-    return ok(res, { message: "Cập nhật mật khẩu thành công." });
+    if (newPassword !== confirmPassword) return fail(res, 400, "Mật khẩu xác nhận không khớp.");
+
+    const updated = await authService.resetPasswordWithOtp(email, otp, newPassword);
+    if (!updated) return fail(res, 400, "Mã xác nhận không đúng hoặc đã hết hạn.");
+
+    return ok(res, { message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." });
   }
 }
 

@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const interactionController = require("../controllers/interaction.controller");
-const { authenticateToken, authorizeRoles } = require("../lib/auth-middleware");
+const { authenticateToken, optionalAuthenticateToken, authorizeRoles } = require("../lib/auth-middleware");
 const { asyncHandler } = require("../utils/helpers");
 
 // PUBLIC ROUTES (No auth needed)
 router.get("/rooms/:roomId/reviews", asyncHandler(interactionController.getReviews));
+router.post("/contact", optionalAuthenticateToken, asyncHandler(interactionController.createContactRequest));
 
 // STUDENT ONLY ROUTES
 router.post("/reports", authenticateToken, authorizeRoles("STUDENT"), asyncHandler(interactionController.createReport));
@@ -20,5 +21,6 @@ router.post("/rooms/:roomId/reviews", authenticateToken, authorizeRoles("STUDENT
 // ALL AUTHENTICATED USERS
 router.get("/notifications", authenticateToken, asyncHandler(interactionController.getNotifications));
 router.patch("/notifications/:id/read", authenticateToken, asyncHandler(interactionController.markNotificationRead));
+router.post("/notifications/:id/reply", authenticateToken, asyncHandler(interactionController.replySupportNotification));
 
 module.exports = router;

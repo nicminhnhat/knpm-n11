@@ -1,5 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
-const AUTH_TOKEN_KEY = "knpm_n11_auth_token";
+const envApiUrl = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.PROD
+  ? envApiUrl
+  : (envApiUrl || "http://localhost:3001");
+
+if (import.meta.env.PROD && !API_URL) {
+  throw new Error("Missing VITE_API_URL in production build.");
+}
+export const AUTH_TOKEN_KEY = "knpm_n11_auth_token";
 
 function getAuthToken() {
   return window.localStorage.getItem(AUTH_TOKEN_KEY);
@@ -51,6 +58,27 @@ async function uploadImage(file) {
   const formData = new FormData();
   formData.append("file", file);
   return authRequest("/api/uploads", { method: "POST", body: formData });
+}
+
+function forgotPassword(email) {
+  return apiRequest("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email })
+  });
+}
+
+function verifyResetOtp(email, otp) {
+  return apiRequest("/api/auth/verify-reset-otp", {
+    method: "POST",
+    body: JSON.stringify({ email, otp })
+  });
+}
+
+function resetPassword(email, otp, newPassword, confirmPassword) {
+  return apiRequest("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ email, otp, newPassword, confirmPassword })
+  });
 }
 
 function asVnd(value) {
@@ -106,4 +134,4 @@ function normalizeRoom(room) {
   };
 }
 
-export { API_URL, AUTH_TOKEN_KEY, apiRequest, authRequest, asVnd, getAuthToken, normalizeRoom, roomImage, roomTypeLabel, statusLabel, uploadImage };
+export { API_URL, apiRequest, authRequest, asVnd, forgotPassword, getAuthToken, normalizeRoom, resetPassword, roomImage, roomTypeLabel, statusLabel, uploadImage, verifyResetOtp };

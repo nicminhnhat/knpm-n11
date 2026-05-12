@@ -33,10 +33,6 @@ function HomePage() {
                 <h1 className="page-title max-w-3xl">
                   Tìm phòng trọ rõ ràng hơn, nhanh hơn và bớt mệt hơn.
                 </h1>
-                <p className="page-copy max-w-2xl">
-                  Lấy cảm hứng từ bộ template gốc, phiên bản React này tập trung vào trải nghiệm
-                  lọc phòng, liên hệ chủ trọ và giới thiệu phòng nổi bật theo cách gọn gàng hơn.
-                </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link className="button-primary" to="/rooms">

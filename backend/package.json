@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "node --watch app.js",
+    "dev": "node app.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "node scripts/seed.js",
@@ -25,7 +25,8 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.3",
     "prisma": "^6.18.0",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "nodemailer": "^6.9.16"
   },
   "engines": {
     "node": ">=20.0.0"

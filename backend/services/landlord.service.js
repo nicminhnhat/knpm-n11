@@ -1,6 +1,12 @@
 const prisma = require("../lib/prisma");
 const { postInclude } = require("../utils/constants");
 
+function normalizeImages(images = []) {
+  return images
+    .filter((img) => img && img.url)
+    .map((img, index) => ({ url: img.url, alt: img.alt, sortOrder: img.sortOrder ?? index }));
+}
+
 class LandlordService {
   async getRooms(landlordId, skip, take) {
     const where = { landlordId };
@@ -20,13 +26,25 @@ class LandlordService {
       data: {
         ...data,
         landlordId,
-        images: { create: images.filter((img) => img && img.url).map((img, index) => ({ url: img.url, alt: img.alt, sortOrder: img.sortOrder ?? index })) }
+        images: { create: normalizeImages(images) }
       },
       include: { images: { orderBy: { sortOrder: "asc" } } }
     });
   }
 
-  async updateRoom(id, data) {
+  async updateRoom(id, data, images) {
+    if (Array.isArray(images)) {
+      const nextImages = normalizeImages(images);
+      return prisma.$transaction(async (tx) => {
+        await tx.room.update({ where: { id }, data });
+        await tx.roomImage.deleteMany({ where: { roomId: id } });
+        if (nextImages.length) {
+          await tx.roomImage.createMany({ data: nextImages.map((img, index) => ({ roomId: id, url: img.url, alt: img.alt, sortOrder: img.sortOrder ?? index })) });
+        }
+        return tx.room.findUnique({ where: { id }, include: { images: { orderBy: { sortOrder: "asc" } }, posts: true } });
+      });
+    }
+
     return prisma.room.update({ where: { id }, data, include: { images: true, posts: true } });
   }
 
@@ -47,14 +65,30 @@ class LandlordService {
     return prisma.post.findFirst({ where: { id, landlordId }, include: postInclude });
   }
 
-  async createPost(landlordId, roomId, title, description, normalizedImages) {
-    await Promise.all(normalizedImages.map((img, index) => prisma.roomImage.create({
-      data: { roomId, url: img.url, alt: img.alt, sortOrder: index }
-    })));
-    return prisma.post.create({ data: { landlordId, roomId, title, description, status: "PENDING" }, include: postInclude });
+  async replaceRoomImages(tx, roomId, images) {
+    const nextImages = normalizeImages(images);
+    if (!nextImages.length) return;
+    await tx.roomImage.deleteMany({ where: { roomId } });
+    await tx.roomImage.createMany({ data: nextImages.map((img, index) => ({ roomId, url: img.url, alt: img.alt, sortOrder: img.sortOrder ?? index })) });
   }
 
-  async updatePost(id, data) {
+  async createPost(landlordId, roomId, title, description, normalizedImages) {
+    return prisma.$transaction(async (tx) => {
+      await this.replaceRoomImages(tx, roomId, normalizedImages);
+      const post = await tx.post.create({ data: { landlordId, roomId, title, description, status: "PENDING" } });
+      return tx.post.findUnique({ where: { id: post.id }, include: postInclude });
+    });
+  }
+
+  async updatePost(id, data, images) {
+    if (Array.isArray(images)) {
+      return prisma.$transaction(async (tx) => {
+        const post = await tx.post.update({ where: { id }, data });
+        await this.replaceRoomImages(tx, data.roomId || post.roomId, images);
+        return tx.post.findUnique({ where: { id }, include: postInclude });
+      });
+    }
+
     return prisma.post.update({ where: { id }, data, include: postInclude });
   }
 
