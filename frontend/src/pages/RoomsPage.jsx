@@ -18,6 +18,7 @@ function RoomsPage() {
   const [filters, setFilters] = useState({ q: "", minPrice: "", maxPrice: "", district: "", type: "", amenities: [] });
   const [rooms, setRooms] = useState([]);
   const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -37,8 +38,10 @@ function RoomsPage() {
         }
       }
     });
+    params.set("page", page);
+    params.set("limit", 6);
     return params.toString();
-  }, [filters]);
+  }, [filters, page]);
 
   async function loadRooms() {
     setIsLoading(true);
@@ -63,16 +66,23 @@ function RoomsPage() {
       const numValue = parseFloat(value);
       if (numValue < 0) return;
     }
+    setPage(1);
     setFilters((current) => ({ ...current, [key]: value }));
   }
 
   function toggleAmenity(value) {
+    setPage(1);
     setFilters((current) => ({
       ...current,
       amenities: current.amenities.includes(value)
         ? current.amenities.filter((item) => item !== value)
         : [...current.amenities, value]
     }));
+  }
+
+  function resetFilters() {
+    setPage(1);
+    setFilters({ q: "", minPrice: "", maxPrice: "", district: "", type: "", amenities: [] });
   }
 
   return (
@@ -100,7 +110,7 @@ function RoomsPage() {
                 <option value="APARTMENT">Căn hộ</option>
                 <option value="OTHER">Khác</option>
               </CustomSelect>
-              <button className="button-secondary" type="button" onClick={() => setFilters({ q: "", minPrice: "", maxPrice: "", district: "", type: "", amenities: [] })}>
+              <button className="button-secondary" type="button" onClick={resetFilters}>
                 Xóa bộ lọc
               </button>
             </div>
@@ -121,7 +131,6 @@ function RoomsPage() {
           <SectionHeader
             eyebrow="Kết quả"
             title={isLoading ? "Đang tải phòng trọ..." : `${pagination?.total ?? rooms.length} phòng đang hiển thị`}
-            description="Danh sách các phòng đang mở cho thuê để bạn tiện so sánh và liên hệ ngay."
           />
 
           {errorMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div> : null}
@@ -136,6 +145,32 @@ function RoomsPage() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {rooms.map((room) => <RoomCard key={room.id} room={room} />)}
           </div>
+
+          {pagination && pagination.totalPages > 1 ? (
+            <div className="flex flex-col items-center justify-between gap-4 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 p-4 shadow-[0_10px_28px_rgba(22,50,74,0.04)] sm:flex-row">
+              <p className="text-sm font-semibold text-[color:var(--muted)]">
+                Trang {pagination.page} / {pagination.totalPages}
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button className="button-secondary px-4 py-2.5 text-sm" disabled={page <= 1} type="button" onClick={() => setPage((current) => Math.max(current - 1, 1))}>
+                  Trang trước
+                </button>
+                {Array.from({ length: pagination.totalPages }, (_, index) => index + 1).slice(0, 8).map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    className={`rounded-full border px-4 py-2 text-sm font-extrabold transition ${pageNumber === page ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--line)] bg-white text-[color:var(--ink)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"}`}
+                    type="button"
+                    onClick={() => setPage(pageNumber)}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+                <button className="button-secondary px-4 py-2.5 text-sm" disabled={page >= pagination.totalPages} type="button" onClick={() => setPage((current) => Math.min(current + 1, pagination.totalPages))}>
+                  Trang sau
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
     </>

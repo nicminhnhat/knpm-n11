@@ -81,6 +81,31 @@ function resetPassword(email, otp, newPassword, confirmPassword) {
   });
 }
 
+function formatVietnameseDate(value) {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function postedDateLabel(value) {
+  const formatted = formatVietnameseDate(value);
+  if (!formatted) return "Chưa cập nhật ngày đăng";
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return `Đăng ngày ${formatted}`;
+
+  const diffMs = Date.now() - date.getTime();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  if (diffMs >= 0 && diffMs < oneDayMs) {
+    const hours = Math.floor(diffMs / (60 * 60 * 1000));
+    const timeLabel = hours <= 0 ? "dưới 1 giờ trước" : `${hours} giờ trước`;
+    return `Đăng ${timeLabel} · ${formatted}`;
+  }
+
+  return `Đăng ngày ${formatted}`;
+}
+
 function asVnd(value) {
   const n = Number(value || 0);
   if (n >= 1000000) return `${(n / 1000000).toLocaleString("vi-VN")} triệu/tháng`;
@@ -130,8 +155,11 @@ function normalizeRoom(room) {
     priceLabel: room.priceLabel || asVnd(room.price),
     areaLabel: room.areaLabel || `${room.area || 0} m²`,
     statusLabel: statusLabel(room.status),
+    createdAt: room.createdAt,
+    postCreatedAt: room.posts?.[0]?.createdAt || room.posts?.[0]?.publishedAt || room.createdAt,
+    postedDateLabel: postedDateLabel(room.posts?.[0]?.createdAt || room.posts?.[0]?.publishedAt || room.createdAt),
     ownerName: room.landlord?.fullName || room.contactName || "Chủ trọ"
   };
 }
 
-export { API_URL, apiRequest, authRequest, asVnd, forgotPassword, getAuthToken, normalizeRoom, resetPassword, roomImage, roomTypeLabel, statusLabel, uploadImage, verifyResetOtp };
+export { API_URL, apiRequest, authRequest, asVnd, forgotPassword, formatVietnameseDate, getAuthToken, normalizeRoom, postedDateLabel, resetPassword, roomImage, roomTypeLabel, statusLabel, uploadImage, verifyResetOtp };

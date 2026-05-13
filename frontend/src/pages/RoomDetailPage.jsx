@@ -4,7 +4,7 @@ import CustomSelect from "../components/CustomSelect.jsx";
 import FeedbackModal from "../components/FeedbackModal.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { apiRequest, asVnd, authRequest, normalizeRoom, roomImage, roomTypeLabel, statusLabel } from "../lib/api.js";
+import { apiRequest, asVnd, authRequest, normalizeRoom, postedDateLabel, roomImage, roomTypeLabel, statusLabel } from "../lib/api.js";
 
 function MessageBox({ type = "info", children }) {
   const styles = type === "error" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700";
@@ -224,6 +224,7 @@ function RoomDetailPage() {
                     ))}
                   </div>
                   <h2 className="mt-5 font-display text-3xl text-[color:var(--ink)]">{item.title}</h2>
+                  <p className="mt-2 text-xs font-extrabold uppercase tracking-[0.12em] text-[color:var(--brand)]">{postedDateLabel(approvedPost?.createdAt || approvedPost?.publishedAt || item.createdAt)}</p>
                   <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">{item.description}</p>
                   <div className="mt-6 grid gap-4 sm:grid-cols-3">
                     <div className="metric-card"><p className="text-xl font-extrabold text-[color:var(--brand)]">{asVnd(item.price)}</p><p className="mt-1 text-sm text-[color:var(--muted)]">Giá thuê</p></div>

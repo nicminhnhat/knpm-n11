@@ -31,7 +31,7 @@ function HomePage() {
               <span className="eyebrow">Nền tảng tìm trọ cho sinh viên Huế</span>
               <div className="space-y-5">
                 <h1 className="page-title max-w-3xl">
-                  Tìm phòng trọ rõ ràng hơn, nhanh hơn và bớt mệt hơn.
+                  Phòng trọ rõ ràng, lựa chọn dễ dàng.
                 </h1>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
@@ -40,7 +40,7 @@ function HomePage() {
                   <Icon className="h-4 w-4" name="arrow-right" />
                 </Link>
                 <Link className="button-secondary" to="/rent">
-                  Đăng tin cho thuê
+                  Hướng dẫn sử dụng
                 </Link>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
