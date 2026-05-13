@@ -368,7 +368,7 @@ function ProfileSection({ refreshUser, user }) {
             <Field label="Mật khẩu mới"><TextInput type="password" value={passwords.newPassword} onChange={(e) => setPasswords((v) => ({ ...v, newPassword: e.target.value }))} /></Field>
             <Field label="Xác nhận mật khẩu mới"><TextInput type="password" value={passwords.confirmPassword} onChange={(e) => setPasswords((v) => ({ ...v, confirmPassword: e.target.value }))} /></Field>
           </div>
-          <button className="button-secondary mt-5 w-fit" type="submit">Đổi mật khẩu</button>
+          <button className="button-primary mt-5 w-fit" type="submit">Đổi mật khẩu</button>
         </form>
       </div>
     </Card>
@@ -1341,6 +1341,7 @@ function DashboardPage() {
     if (user.role === "ADMIN") {
       return (
         <>
+          <NotificationsSection user={user} />
           <AdminSection />
           <ProfileSection user={user} refreshUser={refreshUser} />
         </>
@@ -1398,6 +1399,4 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
-
-
 

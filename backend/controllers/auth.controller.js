@@ -68,9 +68,13 @@ class AuthController {
     const mailResult = await emailService.sendPasswordResetOtp(user.email, otp);
     await authService.cleanupExpiredPasswordResetTokens().catch(() => null);
 
+    if (!mailResult.sent && !mailResult.devMode) {
+      return fail(res, 500, "Không thể gửi mã xác nhận. Vui lòng thử lại sau.");
+    }
+
     return ok(res, {
       message: genericMessage,
-      devOtp: process.env.NODE_ENV === "production" || mailResult.sent ? undefined : otp
+      devOtp: process.env.NODE_ENV !== "production" && mailResult.devMode ? otp : undefined
     });
   }
 

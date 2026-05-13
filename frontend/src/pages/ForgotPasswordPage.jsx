@@ -36,6 +36,7 @@ function ForgotPasswordPage() {
   function clearFeedback() {
     setMessage("");
     setErrorMessage("");
+    setDevOtp("");
   }
 
   async function handleSendOtp(event) {
@@ -50,11 +51,11 @@ function ForgotPasswordPage() {
     setIsSubmitting(true);
     try {
       const result = await forgotPassword(email.trim());
-      setMessage(result.message || "Nếu email hợp lệ, mã xác nhận đã được gửi.");
+      setMessage("Mã xác nhận đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư đến hoặc thư rác.");
       setDevOtp(result.devOtp || "");
       setStep(STEPS.OTP);
     } catch (error) {
-      setErrorMessage(error.message || "Không thể gửi mã xác nhận. Vui lòng thử lại.");
+      setErrorMessage(error.message || "Không thể gửi mã xác nhận. Vui lòng thử lại sau.");
     } finally {
       setIsSubmitting(false);
     }
@@ -130,7 +131,7 @@ function ForgotPasswordPage() {
             </div>
 
             {message ? <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{message}</div> : null}
-            {devOtp ? <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">Mã OTP thử nghiệm: {devOtp}</div> : null}
+            {import.meta.env.DEV && devOtp ? <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">Mã OTP thử nghiệm: {devOtp}</div> : null}
             {errorMessage ? <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{errorMessage}</div> : null}
 
             {step === STEPS.EMAIL ? (

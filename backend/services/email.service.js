@@ -38,19 +38,32 @@ async function sendPasswordResetOtp(email, otp) {
 
   const from = process.env.MAIL_FROM || process.env.MAIL_USER;
   const subject = "Mã xác nhận đặt lại mật khẩu - Trọ Sinh Viên Huế";
-  const text = `Mã xác nhận đặt lại mật khẩu của bạn là: ${otp}\nMã có hiệu lực trong ${expiresMinutes} phút.\nNếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.`;
+  const text = `Xin chào,
+Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản trên hệ thống Trọ Sinh Viên Huế.
+
+Mã xác nhận của bạn là: ${otp}
+
+Mã này có hiệu lực trong ${expiresMinutes} phút. Vui lòng không chia sẻ mã này cho người khác.
+
+Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.`;
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#16324a">
-      <h2>Đặt lại mật khẩu</h2>
-      <p>Mã xác nhận đặt lại mật khẩu của bạn là:</p>
+      <p>Xin chào,</p>
+      <p>Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản trên hệ thống Trọ Sinh Viên Huế.</p>
+      <p>Mã xác nhận của bạn là:</p>
       <p style="font-size:28px;font-weight:700;letter-spacing:6px;color:#d55b36">${otp}</p>
-      <p>Mã có hiệu lực trong <strong>${expiresMinutes} phút</strong>.</p>
+      <p>Mã này có hiệu lực trong <strong>${expiresMinutes} phút</strong>. Vui lòng không chia sẻ mã này cho người khác.</p>
       <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
     </div>
   `;
 
-  await transporter.sendMail({ from, to: email, subject, text, html });
-  return { sent: true, devMode: false };
+  try {
+    await transporter.sendMail({ from, to: email, subject, text, html });
+    return { sent: true, devMode: false };
+  } catch (error) {
+    console.error("[EMAIL OTP] Không thể gửi email OTP:", error?.message || error);
+    return { sent: false, devMode: false, error };
+  }
 }
 
 module.exports = { canSendEmail, sendPasswordResetOtp };
