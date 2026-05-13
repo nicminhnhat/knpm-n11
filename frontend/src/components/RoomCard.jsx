@@ -48,6 +48,7 @@ function RoomCard({ room }) {
             <Icon className="mt-0.5 h-4 w-4 text-[color:var(--brand)]" name="pin" />
             <span>{item.address}</span>
           </div>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--brand)]">{item.postedDateLabel}</p>
         </div>
         <div className="flex items-center justify-between border-t border-[color:var(--line)] pt-4">
           <div className="flex items-center gap-2 text-sm text-[color:var(--muted)]">

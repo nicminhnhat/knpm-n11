@@ -6,14 +6,14 @@ export const mainNavigation = [
   { label: "Trang chủ", to: "/" },
   { label: "Về chúng tôi", to: "/about" },
   { label: "Danh sách phòng", to: "/rooms" },
-  { label: "Cho thuê phòng", to: "/rent" },
+  { label: "Hướng dẫn sử dụng", to: "/rent" },
   { label: "Liên hệ", to: "/contact" }
 ];
 
 export const quickLinks = [
   { label: "Đăng nhập", to: "/login" },
   { label: "Đăng ký", to: "/register" },
-  { label: "Dành cho chủ trọ", to: "/rent" }
+  { label: "Hướng dẫn sử dụng", to: "/rent" }
 ];
 
 export const homeFeatures = [

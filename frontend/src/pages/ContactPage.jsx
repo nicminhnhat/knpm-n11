@@ -1,12 +1,14 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import FormField from "../components/FormField.jsx";
 import { contactCards } from "../data/siteData.js";
 import { Icon } from "../components/Icons.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import SectionHeader from "../components/SectionHeader.jsx";
-import { apiRequest } from "../lib/api.js";
+import { apiRequest, authRequest } from "../lib/api.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 function ContactPage() {
+  const { isAuthenticated } = useAuth();
   const [form, setForm] = useState({ fullName: "", contact: "", content: "" });
   const [isSending, setIsSending] = useState(false);
   const [notice, setNotice] = useState({ type: "", message: "" });
@@ -21,7 +23,8 @@ function ContactPage() {
     try {
       setIsSending(true);
       setNotice({ type: "", message: "" });
-      await apiRequest("/api/contact", {
+      const sendRequest = isAuthenticated ? authRequest : apiRequest;
+      await sendRequest("/api/contact", {
         method: "POST",
         body: JSON.stringify(form)
       });

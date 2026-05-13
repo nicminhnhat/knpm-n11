@@ -3,7 +3,7 @@ import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import FeedbackModal from "../components/FeedbackModal.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { asVnd, authRequest, roomImage, statusLabel, uploadImage } from "../lib/api.js";
+import { asVnd, authRequest, formatVietnameseDate, postedDateLabel, roomImage, roomTypeLabel, statusLabel, uploadImage } from "../lib/api.js";
 
 function Card({ title, description, children }) {
   return (
@@ -19,6 +19,13 @@ function Card({ title, description, children }) {
 
 function Badge({ children }) {
   return <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-bold text-[color:var(--brand)]">{children}</span>;
+}
+
+function postImageList(post) {
+  const postImages = Array.isArray(post?.images) ? post.images.filter(Boolean) : [];
+  const roomImages = Array.isArray(post?.room?.images) ? post.room.images.map((img) => img.url).filter(Boolean) : [];
+  const mainImage = post?.imageUrl || roomImage(post?.room);
+  return [...postImages, ...roomImages, mainImage].filter(Boolean).filter((url, index, arr) => arr.indexOf(url) === index);
 }
 
 function Field({ label, children, className = "" }) {
@@ -114,7 +121,7 @@ function ImageUploadField({ label, value, onChange, action, previewAlt = "Hình 
       const result = await uploadImage(file);
       onChange(result.url);
     } catch (err) {
-      action?.warn(err.message || "Không thể tải hình ảnh lên hệ thống.", "Tải ảnh thất bại");
+      action?.warn(err.message || "Không thể tải hình ảnh lên.", "Tải ảnh thất bại");
     } finally {
       setIsUploading(false);
       event.target.value = "";
@@ -161,7 +168,7 @@ function MultiImageUploadField({ label, value = [], onChange, action, previewAlt
       }
       onChange([...imageUrls, ...uploaded]);
     } catch (err) {
-      action?.warn(err.message || "Không thể tải hình ảnh lên hệ thống.", "Tải ảnh thất bại");
+      action?.warn(err.message || "Không thể tải hình ảnh lên.", "Tải ảnh thất bại");
     } finally {
       setIsUploading(false);
       event.target.value = "";
@@ -554,7 +561,7 @@ function LandlordRoomsSection() {
     };
     const ok = await action.run(
       () => authRequest(editingRoomId ? `/api/landlord/rooms/${editingRoomId}` : "/api/landlord/rooms", { method: editingRoomId ? "PUT" : "POST", body: JSON.stringify(payload) }),
-      editingRoomId ? "Thông tin phòng trọ đã được cập nhật." : "Phòng trọ đã được thêm vào hệ thống.",
+      editingRoomId ? "Thông tin phòng trọ đã được cập nhật." : "Phòng trọ đã được thêm thành công.",
       load
     );
     if (ok) resetRoomForm();
@@ -751,6 +758,7 @@ function LandlordPostsSection() {
                 {post.room ? <img alt={post.title} className="h-20 w-28 rounded-2xl object-cover" src={roomImage(post.room)} /> : null}
                 <div>
                   <p className="text-xl font-extrabold text-[color:var(--ink)]">{post.title}</p>
+                  <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.12em] text-[color:var(--brand)]">{postedDateLabel(post.createdAt || post.publishedAt)}</p>
                   <p className="mt-1 text-sm text-[color:var(--muted)]">{post.rejectReason || post.description}</p>
                   <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
                     <span className={`rounded-full px-3 py-1.5 ${post.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" : post.status === "PENDING" ? "bg-amber-100 text-amber-700" : post.status === "HIDDEN" ? "bg-slate-200 text-slate-700" : "bg-rose-100 text-rose-700"}`}>Trạng thái: {statusLabel(post.status)}</span>
@@ -811,7 +819,18 @@ function MessagesSection() {
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState("");
+  const [threadSearch, setThreadSearch] = useState("");
   const requestedThreadId = searchParams.get("thread");
+  const filteredThreads = useMemo(() => {
+    const keyword = threadSearch.trim().toLowerCase();
+    if (!keyword) return threads;
+    return threads.filter((thread) => [
+      thread.room?.title,
+      thread.post?.title,
+      thread.student?.fullName,
+      thread.landlord?.fullName
+    ].filter(Boolean).some((value) => String(value).toLowerCase().includes(keyword)));
+  }, [threads, threadSearch]);
 
   async function loadThreads() {
     const response = await authRequest("/api/messages/threads");
@@ -840,8 +859,17 @@ function MessagesSection() {
       {action.modal}
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-3">
-          {threads.map((thread) => <button key={thread.id} className={`w-full rounded-[1.2rem] border p-4 text-left text-sm transition ${selected?.id === thread.id ? "border-[color:var(--brand)] bg-orange-50" : "border-[color:var(--line)] bg-white hover:border-[color:var(--brand)]"}`} onClick={() => { setSelected(thread); loadMessages(thread.id); }}><strong className="text-base text-[color:var(--ink)]">{thread.room?.title || thread.post?.title || "Cuộc trò chuyện"}</strong><div className="mt-2 grid gap-1 text-[color:var(--muted)]"><p><strong className="text-[color:var(--ink)]">Sinh viên:</strong> {thread.student?.fullName || "Chưa cập nhật"}</p><p><strong className="text-[color:var(--ink)]">Chủ trọ:</strong> {thread.landlord?.fullName || "Chưa cập nhật"}</p></div></button>)}
+          <input
+            className="input-shell"
+            placeholder="Tìm cuộc trò chuyện..."
+            value={threadSearch}
+            onChange={(event) => setThreadSearch(event.target.value)}
+          />
+          <div className="max-h-[30rem] space-y-3 overflow-y-auto pr-2">
+            {filteredThreads.map((thread) => <button key={thread.id} className={`w-full rounded-[1.2rem] border p-4 text-left text-sm transition ${selected?.id === thread.id ? "border-[color:var(--brand)] bg-orange-50" : "border-[color:var(--line)] bg-white hover:border-[color:var(--brand)]"}`} onClick={() => { setSelected(thread); loadMessages(thread.id); }}><strong className="text-base text-[color:var(--ink)]">{thread.room?.title || thread.post?.title || "Cuộc trò chuyện"}</strong><div className="mt-2 grid gap-1 text-[color:var(--muted)]"><p><strong className="text-[color:var(--ink)]">Sinh viên:</strong> {thread.student?.fullName || "Chưa cập nhật"}</p><p><strong className="text-[color:var(--ink)]">Chủ trọ:</strong> {thread.landlord?.fullName || "Chưa cập nhật"}</p></div></button>)}
+          </div>
           {!threads.length ? <p className="text-sm text-[color:var(--muted)]">Chưa có cuộc trò chuyện.</p> : null}
+          {threads.length && !filteredThreads.length ? <p className="text-sm text-[color:var(--muted)]">Không tìm thấy cuộc trò chuyện phù hợp.</p> : null}
         </div>
         <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
           {selected ? (
@@ -880,12 +908,74 @@ function MessagesSection() {
   );
 }
 
+function AdminPostDetailModal({ post, onApprove, onClose, onHide, onReject }) {
+  if (!post) return null;
+  const images = postImageList(post);
+  const room = post.room || {};
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-white/80 bg-white p-5 shadow-[0_30px_90px_rgba(15,23,42,0.25)] sm:p-7">
+        <div className="flex flex-col gap-4 border-b border-[color:var(--line)] pb-5 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[color:var(--brand)]">Chi tiết bài đăng</p>
+            <h3 className="mt-2 font-display text-3xl text-[color:var(--ink)]">{post.title}</h3>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+              <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1.5 text-[color:var(--brand)]">{postedDateLabel(post.createdAt || post.publishedAt)}</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-700">Trạng thái: {statusLabel(post.status)}</span>
+              <span className="rounded-full bg-violet-100 px-3 py-1.5 text-violet-700">Chủ trọ: {post.landlord?.fullName || "Không rõ"}</span>
+            </div>
+          </div>
+          <button className="button-secondary px-4 py-2.5" type="button" onClick={onClose}>Đóng</button>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-5">
+            {images.length ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {images.slice(0, 4).map((url, index) => (
+                  <img key={`${url}-${index}`} alt={`${post.title} ${index + 1}`} className="h-52 w-full rounded-[1.25rem] object-cover" src={url} />
+                ))}
+              </div>
+            ) : null}
+            <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-[color:var(--surface)] p-5">
+              <p className="text-lg font-extrabold text-[color:var(--ink)]">Mô tả bài đăng</p>
+              <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{post.description || "Chưa cập nhật mô tả."}</p>
+            </div>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-5 shadow-[0_10px_28px_rgba(22,50,74,0.04)]">
+            <p className="text-lg font-extrabold text-[color:var(--ink)]">Thông tin phòng trọ</p>
+            <div className="mt-4 grid gap-3 text-sm leading-7 text-[color:var(--muted)]">
+              <p><strong className="text-[color:var(--ink)]">Phòng:</strong> {room.title || "Không gắn phòng"}</p>
+              <p><strong className="text-[color:var(--ink)]">Địa chỉ:</strong> {room.address || "Chưa cập nhật"}</p>
+              <p><strong className="text-[color:var(--ink)]">Loại phòng:</strong> {roomTypeLabel(room.type)}</p>
+              <p><strong className="text-[color:var(--ink)]">Giá thuê:</strong> {room.price ? asVnd(room.price) : "Chưa cập nhật"}</p>
+              <p><strong className="text-[color:var(--ink)]">Diện tích:</strong> {room.area ? `${room.area} m²` : "Chưa cập nhật"}</p>
+              <p><strong className="text-[color:var(--ink)]">Tiền cọc:</strong> {room.deposit ? asVnd(room.deposit) : "Chưa cập nhật"}</p>
+              <p><strong className="text-[color:var(--ink)]">Điện:</strong> {room.electricityPrice ? asVnd(room.electricityPrice) : "Theo thực tế"}</p>
+              <p><strong className="text-[color:var(--ink)]">Nước:</strong> {room.waterPrice ? asVnd(room.waterPrice) : "Theo thực tế"}</p>
+              <p><strong className="text-[color:var(--ink)]">Tiện ích:</strong> {Array.isArray(room.amenities) && room.amenities.length ? room.amenities.join(", ") : "Chưa cập nhật"}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
+          <button className="button-secondary" type="button" onClick={() => onReject(post)}>Từ chối</button>
+          <button className="button-secondary" type="button" onClick={() => onHide(post)}>Ẩn bài</button>
+          <button className="button-primary" type="button" onClick={() => onApprove(post)}>Phê duyệt</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminSection({ mode }) {
   const action = useActionDialog();
   const [dashboard, setDashboard] = useState(null);
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
   const [expandedPostId, setExpandedPostId] = useState(null);
+  const [selectedAdminPost, setSelectedAdminPost] = useState(null);
   const [verifications, setVerifications] = useState([]);
   const [reports, setReports] = useState([]);
 
@@ -915,7 +1005,7 @@ function AdminSection({ mode }) {
         "Bài đăng đã được phê duyệt.",
         async () => {
           await load();
-          setExpandedPostId(post.id);
+          setSelectedAdminPost(null);
         }
       ),
       "Duyệt"
@@ -934,7 +1024,7 @@ function AdminSection({ mode }) {
         "Bài đăng đã được từ chối.",
         async () => {
           await load();
-          setExpandedPostId(post.id);
+          setSelectedAdminPost(null);
         }
       )
     });
@@ -949,7 +1039,7 @@ function AdminSection({ mode }) {
         "Bài đăng đã được ẩn.",
         async () => {
           await load();
-          setExpandedPostId(post.id);
+          setSelectedAdminPost(null);
         }
       ),
       "Ẩn bài"
@@ -964,7 +1054,7 @@ function AdminSection({ mode }) {
     action.requestText({
       title: "Khóa tài khoản",
       message: `Nhập lý do khóa tài khoản “${u.fullName}”.`,
-      defaultValue: "Tài khoản vi phạm quy định hệ thống.",
+      defaultValue: "Tài khoản có hoạt động chưa phù hợp.",
       placeholder: "Nhập lý do khóa tài khoản",
       confirmLabel: "Khóa tài khoản",
       onSubmit: (reason) => action.run(
@@ -1053,6 +1143,13 @@ function AdminSection({ mode }) {
   return (
     <div className="space-y-8">
       {action.modal}
+      <AdminPostDetailModal
+        post={selectedAdminPost}
+        onClose={() => setSelectedAdminPost(null)}
+        onApprove={approvePost}
+        onReject={rejectPost}
+        onHide={hidePost}
+      />
       {!mode ? (
         <>
           <Card title="Bảng điều khiển quản trị" description="Theo dõi nhanh số liệu người dùng, bài đăng, hồ sơ xác minh và báo cáo cần xử lý.">
@@ -1105,6 +1202,7 @@ function AdminSection({ mode }) {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
                     <p className="text-xl font-extrabold text-[color:var(--ink)]">{post.title}</p>
+                    <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[color:var(--brand)]">{postedDateLabel(post.createdAt || post.publishedAt)}</p>
                     <div className="grid gap-1 text-sm text-[color:var(--muted)]">
                       <p><strong className="text-[color:var(--ink)]">Chủ trọ:</strong> {post.landlord?.fullName || "Không rõ"}</p>
                       <p><strong className="text-[color:var(--ink)]">Địa chỉ:</strong> {post.room?.address || "Chưa cập nhật"}</p>
@@ -1116,8 +1214,8 @@ function AdminSection({ mode }) {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 lg:justify-end">
-                    <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => setExpandedPostId((current) => current === post.id ? null : post.id)}>
-                      {expandedPostId === post.id ? "Thu gọn hồ sơ" : "Xem hồ sơ đăng ký"}
+                    <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => setSelectedAdminPost(post)}>
+                      Xem chi tiết
                     </button>
                     <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => approvePost(post)}>Duyệt</button>
                     <button className="button-secondary px-4 py-2.5 text-sm" type="button" onClick={() => rejectPost(post)}>Từ chối</button>
@@ -1245,6 +1343,17 @@ function NotificationsSection({ user }) {
   const action = useActionDialog();
   const [notifications, setNotifications] = useState([]);
   const [replyById, setReplyById] = useState({});
+  const [notificationSearch, setNotificationSearch] = useState("");
+  const filteredNotifications = useMemo(() => {
+    const keyword = notificationSearch.trim().toLowerCase();
+    if (!keyword) return notifications;
+    return notifications.filter((notification) => {
+      const parsed = parseSupportNotification(notification.content);
+      return [notification.title, parsed.message, notification.type]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(keyword));
+    });
+  }, [notifications, notificationSearch]);
 
   async function loadNotifications() {
     const response = await authRequest("/api/notifications");
@@ -1272,8 +1381,16 @@ function NotificationsSection({ user }) {
   return (
     <Card title="Thông báo">
       {action.modal}
-      <div className="grid gap-3">
-        {notifications.length ? notifications.map((notification) => {
+      <div className="mb-4">
+        <input
+          className="input-shell"
+          placeholder="Tìm thông báo..."
+          value={notificationSearch}
+          onChange={(event) => setNotificationSearch(event.target.value)}
+        />
+      </div>
+      <div className="max-h-[34rem] space-y-3 overflow-y-auto pr-2">
+        {filteredNotifications.length ? filteredNotifications.map((notification) => {
           const parsed = parseSupportNotification(notification.content);
           const isSupportNotification = String(notification.type || "").startsWith("SUPPORT_") || String(notification.title || "").includes("[Lien he ho tro]") || String(notification.title || "").includes("[Phan hoi ho tro]");
           const canReply = isSupportNotification && (!parsed.meta?.targetUserId || parsed.meta.targetUserId !== user.id);
@@ -1281,6 +1398,7 @@ function NotificationsSection({ user }) {
           return (
             <div key={notification.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
               <p className="text-lg font-extrabold text-[color:var(--ink)]">{notification.title}</p>
+              {notification.createdAt ? <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.12em] text-[color:var(--brand)]">{formatVietnameseDate(notification.createdAt)}</p> : null}
               <p className="mt-1 text-sm text-[color:var(--muted)]">{parsed.message}</p>
               {canReply ? (
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
@@ -1297,7 +1415,7 @@ function NotificationsSection({ user }) {
               ) : null}
             </div>
           );
-        }) : <p className="text-sm text-[color:var(--muted)]">Chưa có thông báo.</p>}
+        }) : <p className="text-sm text-[color:var(--muted)]">{notifications.length ? "Không tìm thấy thông báo phù hợp." : "Chưa có thông báo."}</p>}
       </div>
     </Card>
   );
@@ -1382,8 +1500,8 @@ function DashboardPage() {
   return (
     <>
       <PageIntro
-        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">{roleLabel(user.role)}</p><p className="mt-2">Mọi chức năng được sắp xếp theo từng mục để bạn thao tác nhanh và rõ ràng hơn.</p></div>}
-        description="Chọn đúng mục bạn cần để xem thông tin liên quan và xử lý công việc thuận tiện hơn."
+        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">{roleLabel(user.role)}</p><p className="mt-2">Các mục quản lý được sắp xếp rõ ràng để bạn theo dõi và xử lý nhanh hơn.</p></div>}
+        description="Theo dõi thông tin tài khoản, thông báo và các công việc quan trọng trong cùng một nơi."
         eyebrow="Danh mục quản lý"
         stats={stats}
         title={section ? titleBySection[section] || "Danh mục quản lý" : "Tổng quan"}

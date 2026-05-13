@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import logoImage from "../assets/logo.png";
 import { useAuth } from "../context/AuthContext.jsx";
 import { mainNavigation } from "../data/siteData.js";
@@ -64,9 +64,6 @@ function GuestLinks({ onNavigate }) {
       </NavLink>
       <NavLink className={navClass} onClick={onNavigate} to="/register">
         Đăng ký
-      </NavLink>
-      <NavLink className={navClass} onClick={onNavigate} to="/rent">
-        Dành cho chủ trọ
       </NavLink>
     </>
   );
@@ -155,7 +152,38 @@ function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoutDialog, setLogoutDialog] = useState(null);
   const { isAuthenticated, logout, user } = useAuth();
-  const topNavigation = user?.role === "ADMIN" ? mainNavigation.filter((item) => item.to !== "/contact") : mainNavigation;
+  const navigate = useNavigate();
+  const [landlordGuideDialog, setLandlordGuideDialog] = useState(null);
+  const topNavigation = user?.role === "ADMIN"
+    ? mainNavigation.filter((item) => !["/contact", "/rent"].includes(item.to))
+    : mainNavigation;
+
+  useEffect(() => {
+    if (!user || user.role !== "LANDLORD") return;
+    if (user.verificationStatus === "VERIFIED") return;
+    const storageKey = `landlordVerificationGuideSeen_${user.id || user.email}`;
+    if (window.localStorage.getItem(storageKey)) return;
+    setLandlordGuideDialog({
+      type: "confirm",
+      title: "Hoàn tất xác minh để đăng tin cho thuê",
+      message: "Để đăng phòng trọ và tạo bài đăng cho thuê, bạn cần gửi hồ sơ xác minh tài khoản trước. Sau khi được quản trị viên duyệt, bạn có thể thêm phòng, tạo bài đăng và quản lý tin cho thuê.",
+      confirmLabel: "Đi tới xác minh",
+      cancelLabel: "Để sau",
+      storageKey
+    });
+  }, [user]);
+
+  function closeLandlordGuide() {
+    if (landlordGuideDialog?.storageKey) {
+      window.localStorage.setItem(landlordGuideDialog.storageKey, "1");
+    }
+    setLandlordGuideDialog(null);
+  }
+
+  function confirmLandlordGuide() {
+    closeLandlordGuide();
+    navigate("/dashboard/verification");
+  }
 
   function requestLogout() {
     setLogoutDialog({
@@ -176,6 +204,7 @@ function SiteHeader() {
   return (
     <header className="shell relative z-[100] pt-4 sm:pt-5">
       <FeedbackModal dialog={logoutDialog} onClose={() => setLogoutDialog(null)} onConfirm={confirmLogout} />
+      <FeedbackModal dialog={landlordGuideDialog} onClose={closeLandlordGuide} onConfirm={confirmLandlordGuide} />
       <div className="panel relative overflow-visible bg-[color:var(--surface-strong)]/92 backdrop-blur">
         <div className="flex items-center justify-between gap-4 border-b border-[color:var(--line)] px-5 py-4 sm:px-8">
           <NavLink className="flex items-center gap-4" to="/">
@@ -276,6 +305,9 @@ function SiteHeader() {
 }
 
 function SiteFooter() {
+  const { user } = useAuth();
+  const footerNavigation = user?.role === "ADMIN" ? mainNavigation.filter((item) => item.to !== "/rent") : mainNavigation;
+
   return (
     <footer className="mt-16 bg-[color:var(--ink)] text-white">
       <div className="shell overflow-hidden rounded-t-[2.5rem] border border-white/8 border-b-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent)] px-4 py-14 sm:grid sm:grid-cols-2 sm:gap-10 lg:grid-cols-4">
@@ -292,7 +324,7 @@ function SiteFooter() {
             Điều hướng
           </p>
           <div className="grid gap-3 text-sm text-slate-300">
-            {mainNavigation.map((item) => (
+            {footerNavigation.map((item) => (
               <NavLink key={item.to} className="transition hover:text-white" end={item.to === "/"} to={item.to}>
                 {item.label}
               </NavLink>
@@ -305,9 +337,11 @@ function SiteFooter() {
             Hỗ trợ
           </p>
           <div className="grid gap-3 text-sm text-slate-300">
-            <NavLink className="transition hover:text-white" to="/rent">
-              Hướng dẫn đăng tin
-            </NavLink>
+            {user?.role !== "ADMIN" ? (
+              <NavLink className="transition hover:text-white" to="/rent">
+                Hướng dẫn sử dụng
+              </NavLink>
+            ) : null}
             <NavLink className="transition hover:text-white" to="/rooms">
               Hướng dẫn tìm phòng
             </NavLink>

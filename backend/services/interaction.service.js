@@ -40,6 +40,23 @@ class InteractionService {
     });
     if (!admins.length) return 0;
 
+    let resolvedSenderUserId = senderUserId;
+    if (!resolvedSenderUserId && contact) {
+      const matchedUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: { equals: contact, mode: "insensitive" } },
+            { phone: contact }
+          ]
+        },
+        select: { id: true, role: true }
+      });
+      if (matchedUser) {
+        resolvedSenderUserId = matchedUser.id;
+        senderRole = matchedUser.role || senderRole;
+      }
+    }
+
     const conversationId = crypto.randomUUID();
     const title = `[Lien he ho tro] ${fullName}`;
     const body = `Nguoi gui: ${fullName} (${senderRole}) | Lien he: ${contact} | Noi dung: ${content}`;
@@ -52,13 +69,13 @@ class InteractionService {
         senderName: fullName,
         senderRole,
         senderContact: contact,
-        senderUserId,
-        targetUserId: senderUserId || null
+        senderUserId: resolvedSenderUserId,
+        targetUserId: resolvedSenderUserId || null
       }, body)
     }));
 
-    const userRows = senderUserId ? [{
-      userId: senderUserId,
+    const userRows = resolvedSenderUserId ? [{
+      userId: resolvedSenderUserId,
       type: "SUPPORT_CONTACT",
       title: "[Lien he ho tro] Yeu cau da duoc gui",
       content: buildSupportContent({
@@ -66,7 +83,7 @@ class InteractionService {
         senderName: fullName,
         senderRole,
         senderContact: contact,
-        senderUserId,
+        senderUserId: resolvedSenderUserId,
         targetUserId: admins[0].id
       }, "Yeu cau ho tro cua ban da duoc gui den quan tri vien. Ban co the tiep tuc tra loi tai muc Thong bao.")
     }] : [];
