@@ -78,8 +78,8 @@ function RoomsPage() {
   return (
     <>
       <PageIntro
-        aside={<p>Danh sách phòng trọ được cập nhật từ hệ thống dữ liệu.</p>}
-        description="Tìm kiếm phòng trọ theo từ khóa, khu vực, giá thuê, loại phòng và tiện ích. Chỉ các bài đăng đã được admin duyệt mới hiển thị công khai."
+        aside={<p>Lọc nhanh theo nhu cầu và xem thông tin rõ ràng trước khi liên hệ chủ trọ.</p>}
+        description="Lọc phòng theo từ khóa, khu vực, giá thuê, loại phòng và tiện ích để chọn nơi ở phù hợp. Các tin đăng hiển thị công khai đều đã được kiểm duyệt."
         eyebrow="Danh sách phòng"
         title="Tìm phòng trọ phù hợp với nhu cầu của bạn."
       />
@@ -121,7 +121,7 @@ function RoomsPage() {
           <SectionHeader
             eyebrow="Kết quả"
             title={isLoading ? "Đang tải phòng trọ..." : `${pagination?.total ?? rooms.length} phòng đang hiển thị`}
-            description="Danh sách hiển thị các phòng đang được công khai trên hệ thống."
+            description="Danh sách các phòng đang mở cho thuê để bạn tiện so sánh và liên hệ ngay."
           />
 
           {errorMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div> : null}

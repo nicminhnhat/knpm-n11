@@ -50,7 +50,7 @@ function ForgotPasswordPage() {
     setIsSubmitting(true);
     try {
       const result = await forgotPassword(email.trim());
-      setMessage(result.message || "Nếu email tồn tại trong hệ thống, mã xác nhận đã được gửi.");
+      setMessage(result.message || "Nếu email hợp lệ, mã xác nhận đã được gửi.");
       setDevOtp(result.devOtp || "");
       setStep(STEPS.OTP);
     } catch (error) {
@@ -109,7 +109,7 @@ function ForgotPasswordPage() {
   return (
     <>
       <PageIntro
-        aside={<p>Hệ thống chỉ sử dụng email để gửi mã xác nhận đặt lại mật khẩu.</p>}
+        aside={<p>Mã xác nhận sẽ được gửi về email bạn đã đăng ký.</p>}
         description="Nhập email đã đăng ký, xác nhận mã OTP và tạo mật khẩu mới."
         eyebrow="Quên mật khẩu"
         title="Khôi phục tài khoản"
@@ -119,7 +119,7 @@ function ForgotPasswordPage() {
         <div className="shell max-w-3xl">
           <AuthShell
             badge="Bảo mật tài khoản"
-            description="Quy trình đặt lại mật khẩu gồm 3 bước: nhận mã qua email, xác nhận OTP và nhập mật khẩu mới."
+            description="Chỉ với 3 bước: nhận mã qua email, xác nhận OTP và đặt mật khẩu mới."
             highlights={[]}
             title="Đặt lại mật khẩu"
           >
@@ -130,7 +130,7 @@ function ForgotPasswordPage() {
             </div>
 
             {message ? <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{message}</div> : null}
-            {devOtp ? <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">Mã OTP kiểm thử local: {devOtp}</div> : null}
+            {devOtp ? <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">Mã OTP thử nghiệm: {devOtp}</div> : null}
             {errorMessage ? <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{errorMessage}</div> : null}
 
             {step === STEPS.EMAIL ? (

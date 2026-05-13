@@ -161,8 +161,8 @@ function RoomDetailPage() {
       ) : null}
       {feedback.modal}
       <PageIntro
-        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">Thông tin phòng trọ</p><p className="mt-2">Theo dõi giá thuê, tiện ích, đánh giá và liên hệ chủ trọ.</p></div>}
-        description="Xem hình ảnh, giá thuê, diện tích, tiện ích, thông tin chủ trọ, đánh giá và báo cáo vi phạm."
+        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">Thông tin phòng trọ</p><p className="mt-2">Xem nhanh giá thuê, tiện ích và liên hệ chủ trọ khi phòng phù hợp.</p></div>}
+        description="Xem hình ảnh thực tế, giá thuê, diện tích, địa chỉ, tiện ích và thông tin liên hệ trước khi quyết định."
         eyebrow="Chi tiết phòng trọ"
         title={isLoading ? "Đang tải thông tin phòng..." : item?.title || "Không tìm thấy phòng"}
       />

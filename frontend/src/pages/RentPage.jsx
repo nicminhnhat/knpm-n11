@@ -14,7 +14,7 @@ function RentPage() {
     <>
       <PageIntro
         aside={<div className="space-y-3"><p className="text-lg font-bold text-[color:var(--ink)]">Quy trình chủ trọ</p><p>Đăng ký chủ trọ → gửi xác minh → thêm phòng → tạo bài đăng → chờ admin duyệt.</p></div>}
-        description="Chủ trọ có thể quản lý phòng, tạo bài đăng và gửi hồ sơ xác minh tại khu vực quản lý."
+        description="Quản lý phòng trọ, bài đăng và hồ sơ xác minh tập trung, thuận tiện cho chủ trọ."
         eyebrow="Cho thuê phòng"
         title="Đăng tin rõ ràng để sinh viên tìm thấy bạn nhanh hơn."
       />
@@ -29,7 +29,7 @@ function RentPage() {
               <SectionHeader
                 eyebrow="Lợi ích"
                 title="Quản lý phòng và bài đăng tập trung trong một màn hình."
-                description="Chủ trọ có thể tạo phòng, cập nhật trạng thái còn phòng/hết phòng, tạo bài đăng chờ duyệt và nhắn tin với sinh viên."
+                description="Đăng phòng, cập nhật trạng thái, theo dõi tin nhắn và quản lý bài đăng trong cùng một nơi."
               />
             </div>
             <div className="mt-6 grid gap-4">
@@ -48,10 +48,10 @@ function RentPage() {
             <SectionHeader
               eyebrow="Bắt đầu"
               title={isAuthenticated ? `Xin chào ${user?.fullName}` : "Tạo tài khoản chủ trọ để đăng tin"}
-              description={isAuthenticated ? "Bấm nút bên dưới để vào khu vực quản lý phòng trọ và bài đăng." : "Nếu chưa có tài khoản, hãy đăng ký vai trò Chủ trọ. Sau đó gửi hồ sơ xác minh để được phép đăng tin."}
+              description={isAuthenticated ? "Bấm nút bên dưới để vào trang quản lý phòng trọ và bài đăng của bạn." : "Nếu chưa có tài khoản, hãy đăng ký vai trò Chủ trọ rồi gửi hồ sơ xác minh để bắt đầu đăng tin."}
             />
             <div className="mt-8 grid gap-4">
-              <Link className="button-primary w-fit" to={target}>{isAuthenticated ? "Vào khu vực quản lý" : "Đăng ký chủ trọ"}</Link>
+              <Link className="button-primary w-fit" to={target}>{isAuthenticated ? "Vào trang quản lý" : "Đăng ký chủ trọ"}</Link>
               {!isAuthenticated ? <Link className="button-secondary w-fit" to="/login">Tôi đã có tài khoản</Link> : null}
             </div>
           </div>

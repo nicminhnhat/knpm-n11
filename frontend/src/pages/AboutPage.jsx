@@ -11,11 +11,11 @@ function AboutPage() {
           <div className="space-y-3">
             <p className="text-lg font-bold text-[color:var(--ink)]">Thông tin minh bạch</p>
             <p>
-              Hệ thống hỗ trợ sinh viên tìm phòng và giúp chủ trọ quản lý tin đăng một cách rõ ràng.
+              Nền tảng giúp sinh viên tìm phòng rõ ràng hơn và giúp chủ trọ tiếp cận đúng người thuê.
             </p>
           </div>
         }
-        description="Hệ thống giúp sinh viên tìm trọ an tâm hơn và giúp chủ trọ đăng tin nhất quán, dễ quản lý hơn."
+        description="Chúng tôi xây dựng môi trường tìm trọ minh bạch, dễ dùng và đáng tin cậy cho sinh viên tại Huế."
         eyebrow="Về chúng tôi"
         title="Nền tảng hỗ trợ tìm trọ minh bạch cho sinh viên tại Huế."
         stats={siteStats}
@@ -25,8 +25,8 @@ function AboutPage() {
         <div className="shell space-y-8">
           <SectionHeader
             eyebrow="Giá trị cốt lõi"
-            title="Những giá trị hệ thống hướng đến trong quá trình vận hành."
-            description="Thông tin được tổ chức rõ ràng để người dùng dễ tìm kiếm, so sánh và liên hệ."
+            title="Những giá trị chúng tôi cam kết với người dùng."
+            description="Thông tin rõ ràng, dễ so sánh và dễ liên hệ để bạn đưa ra quyết định nhanh hơn."
           />
 
           <div className="grid gap-6 lg:grid-cols-3">
@@ -51,12 +51,12 @@ function AboutPage() {
                 <span className="eyebrow">Sứ mệnh</span>
                 <h2 className="section-heading">Giúp thông tin thuê trọ đủ rõ để người dùng tự tin quyết định.</h2>
                 <p className="page-copy">
-                  Hệ thống tập trung vào dữ liệu phòng trọ, tài khoản người dùng và quy trình kiểm duyệt để nâng cao độ tin cậy khi tìm kiếm nhà trọ.
+                  Chúng tôi ưu tiên thông tin chính xác, hình ảnh rõ ràng và quy trình kiểm duyệt để bạn yên tâm khi tìm hoặc đăng phòng.
                 </p>
               </div>
               <div className="grid gap-5">
                 <div className="overflow-hidden rounded-[1.75rem] border border-[color:var(--line)]">
-                  <img alt="Không gian phòng được trình bày rõ ràng" className="h-72 w-full object-cover" src={roomImage} />
+                  <img alt="Không gian phòng trọ thực tế" className="h-72 w-full object-cover" src={roomImage} />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
                   {siteStats.map((item) => (

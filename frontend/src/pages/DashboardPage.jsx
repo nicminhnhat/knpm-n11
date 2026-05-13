@@ -315,7 +315,7 @@ function ProfileSection({ refreshUser, user }) {
   }, [user]);
 
   return (
-    <Card title="Thông tin cá nhân" description="Cập nhật hồ sơ và mật khẩu trong các khối riêng để biểu mẫu gọn gàng, dễ thao tác hơn.">
+    <Card title="Thông tin cá nhân" description="Cập nhật hồ sơ và mật khẩu để sử dụng tài khoản an toàn, thuận tiện hơn.">
       {action.modal}
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.85fr)]">
         <form className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/70 p-5 shadow-[0_10px_28px_rgba(22,50,74,0.04)]" onSubmit={async (event) => {
@@ -332,7 +332,7 @@ function ProfileSection({ refreshUser, user }) {
         }}>
           <div className="mb-5">
             <p className="text-lg font-extrabold text-[color:var(--ink)]">Hồ sơ tài khoản</p>
-            <p className="text-sm text-[color:var(--muted)]">Thông tin liên hệ và ảnh đại diện đang hiển thị trên hệ thống.</p>
+            <p className="text-sm text-[color:var(--muted)]">Thông tin liên hệ và ảnh đại diện giúp mọi người kết nối với bạn thuận tiện hơn.</p>
           </div>
           <div className="grid gap-x-5 gap-y-4 lg:grid-cols-2">
             <Field label="Họ tên"><TextInput value={profile.fullName} onChange={(e) => setProfile((v) => ({ ...v, fullName: e.target.value }))} /></Field>
@@ -386,7 +386,7 @@ function StudentSection() {
   useEffect(() => { load().catch(() => { }); }, []);
 
   return (
-    <Card title="Báo cáo của tôi" description="Theo dõi các báo cáo tin đăng vi phạm đã gửi cho quản trị viên.">
+    <Card title="Báo cáo của tôi" description="Theo dõi tiến độ xử lý các báo cáo vi phạm bạn đã gửi.">
       <div className="grid gap-4">
         {reports.length ? reports.map((report) => (
           <div key={report.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
@@ -426,7 +426,7 @@ function LandlordVerificationSection() {
   useEffect(() => { load().catch(() => { }); }, []);
 
   return (
-    <Card title="Xác minh chủ trọ" description="Gửi thông tin giấy tờ trong bố cục rõ ràng, tách riêng thông tin cá nhân, ảnh giấy tờ và ghi chú.">
+    <Card title="Xác minh chủ trọ" description="Gửi hồ sơ xác minh đầy đủ để tăng độ tin cậy khi sinh viên xem tin của bạn.">
       {action.modal}
       {verification ? (
         <div className="mb-6 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 p-5 shadow-[0_10px_28px_rgba(22,50,74,0.04)]">
@@ -561,7 +561,7 @@ function LandlordRoomsSection() {
   }
 
   return (
-    <Card title="Quản lý phòng trọ" description="Biểu mẫu được chia theo nhóm thông tin để dễ nhập và dễ kiểm tra trước khi thêm hoặc chỉnh sửa phòng.">
+    <Card title="Quản lý phòng trọ" description="Thêm phòng mới, cập nhật thông tin và theo dõi trạng thái phòng ngay tại đây.">
       {action.modal}
       <form className="space-y-7" onSubmit={submitRoom}>
         <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/70 p-5 shadow-[0_10px_28px_rgba(22,50,74,0.04)]">
@@ -716,7 +716,7 @@ function LandlordPostsSection() {
   }
 
   return (
-    <Card title="Quản lý bài đăng" description="Tạo, chỉnh sửa và quản lý bài đăng theo bố cục rõ ràng, tách riêng thông tin, hình ảnh và mô tả.">
+    <Card title="Quản lý bài đăng" description="Đăng bài cho thuê, cập nhật nội dung và hình ảnh để tiếp cận sinh viên phù hợp.">
       {action.modal}
       <form className="space-y-7" onSubmit={submitPost}>
         <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/70 p-5 shadow-[0_10px_28px_rgba(22,50,74,0.04)]">
@@ -836,7 +836,7 @@ function MessagesSection() {
   }, [requestedThreadId]);
 
   return (
-    <Card title="Tin nhắn" description="Danh sách cuộc trò chuyện và nội dung trao đổi giữa sinh viên với chủ trọ.">
+    <Card title="Tin nhắn" description="Trao đổi trực tiếp với sinh viên hoặc chủ trọ để chốt thông tin nhanh hơn.">
       {action.modal}
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-3">
@@ -1055,7 +1055,7 @@ function AdminSection({ mode }) {
       {action.modal}
       {!mode ? (
         <>
-          <Card title="Bảng điều khiển quản trị" description="Tổng quan nhanh tình trạng người dùng, bài đăng, hồ sơ xác minh và báo cáo.">
+          <Card title="Bảng điều khiển quản trị" description="Theo dõi nhanh số liệu người dùng, bài đăng, hồ sơ xác minh và báo cáo cần xử lý.">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {Object.entries(dashboard || {}).filter(([, v]) => typeof v !== "object").map(([k, v]) => (
                 <div key={k} className="metric-card">
@@ -1065,19 +1065,11 @@ function AdminSection({ mode }) {
               ))}
             </div>
           </Card>
-          <Card title="Danh mục quản lý quản trị viên" description="Chọn từng chức năng riêng để kiểm duyệt và vận hành hệ thống rõ ràng hơn.">
-            <div className="grid gap-4 md:grid-cols-2">
-              <ManagementCard title="Xác minh tài khoản chủ trọ" description="Kiểm tra giấy tờ và duyệt hồ sơ xác minh." to="/dashboard/admin-verifications" />
-              <ManagementCard title="Quản lý bài đăng" description="Duyệt, từ chối hoặc ẩn bài đăng vi phạm." to="/dashboard/admin-posts" />
-              <ManagementCard title="Quản lý tài khoản người dùng" description="Xem, khóa hoặc mở khóa tài khoản." to="/dashboard/users" />
-              <ManagementCard title="Xử lý báo cáo vi phạm" description="Kiểm tra báo cáo và ghi nhận kết quả xử lý." to="/dashboard/reports" />
-            </div>
-          </Card>
         </>
       ) : null}
 
       {mode === "users" ? (
-        <Card title="Quản lý tài khoản người dùng" description="Danh sách được trình bày gọn gàng, dễ nhìn hơn cho người mới sử dụng.">
+        <Card title="Quản lý tài khoản người dùng" description="Theo dõi tài khoản, trạng thái hoạt động và xác minh để quản lý hiệu quả.">
           <div className="grid gap-4">
             {users.map((u) => (
               <div key={u.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
@@ -1106,7 +1098,7 @@ function AdminSection({ mode }) {
       ) : null}
 
       {mode === "admin-posts" ? (
-        <Card title="Quản lý bài đăng" description="Bố cục rõ ràng hơn để quản trị viên dễ duyệt và xử lý bài đăng.">
+        <Card title="Quản lý bài đăng" description="Duyệt, từ chối hoặc ẩn bài đăng để giữ chất lượng thông tin trên website.">
           <div className="grid gap-4">
             {posts.map((post) => (
               <div key={post.id} className="rounded-[1.4rem] border border-[color:var(--line)] bg-white p-4 shadow-[0_8px_24px_rgba(22,50,74,0.05)] sm:p-5">
@@ -1356,16 +1348,8 @@ function DashboardPage() {
     }
     return (
       <>
-        <ProfileSection user={user} refreshUser={refreshUser} />
         <NotificationsSection user={user} />
-        <Card title="Danh mục quản lý sinh viên" description="Các chức năng được tách riêng để dễ theo dõi tin nhắn, báo cáo và thông tin tài khoản.">
-          <div className="grid gap-4 md:grid-cols-2">
-            <ManagementCard title="Nhắn tin" description="Xem và tiếp tục trao đổi với chủ trọ." to="/dashboard/messages" />
-            <ManagementCard title="Báo cáo của tôi" description="Theo dõi tình trạng các báo cáo vi phạm đã gửi." to="/dashboard/reports" />
-            <ManagementCard title="Thông tin cá nhân" description="Cập nhật hồ sơ và đổi mật khẩu." to="/dashboard/profile" />
-            <ManagementCard title="Thông báo" description="Xem các thông báo mới từ hệ thống." to="/dashboard/notifications" />
-          </div>
-        </Card>
+        <ProfileSection user={user} refreshUser={refreshUser} />
       </>
     );
   }
@@ -1397,8 +1381,8 @@ function DashboardPage() {
   return (
     <>
       <PageIntro
-        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">{roleLabel(user.role)}</p><p className="mt-2">Các chức năng quản lý được tách riêng theo từng danh mục để thao tác dễ hơn.</p></div>}
-        description="Khu vực thao tác riêng, chỉ hiển thị đúng chức năng đang chọn để tránh rối giao diện."
+        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">{roleLabel(user.role)}</p><p className="mt-2">Mọi chức năng được sắp xếp theo từng mục để bạn thao tác nhanh và rõ ràng hơn.</p></div>}
+        description="Chọn đúng mục bạn cần để xem thông tin liên quan và xử lý công việc thuận tiện hơn."
         eyebrow="Danh mục quản lý"
         stats={stats}
         title={section ? titleBySection[section] || "Danh mục quản lý" : "Tổng quan"}
@@ -1414,9 +1398,6 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
-
-
-
 
 
 

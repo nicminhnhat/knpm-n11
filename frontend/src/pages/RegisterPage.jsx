@@ -45,7 +45,7 @@ function RegisterPage() {
     <>
       <PageIntro
         aside={<p>Tạo tài khoản để tìm phòng, nhắn tin liên hệ chủ trọ hoặc đăng tin cho thuê.</p>}
-        description="Đăng ký tài khoản sinh viên hoặc chủ trọ để sử dụng đầy đủ chức năng."
+        description="Đăng ký tài khoản sinh viên hoặc chủ trọ để tìm phòng, liên hệ và quản lý thuận tiện."
         eyebrow="Đăng ký"
         title="Tạo tài khoản mới"
       />
@@ -54,7 +54,7 @@ function RegisterPage() {
         <div className="shell max-w-4xl">
           <AuthShell
             badge="Thành viên mới"
-            description="Điền thông tin tài khoản để bắt đầu sử dụng hệ thống."
+            description="Điền thông tin bên dưới để bắt đầu sử dụng website nhanh chóng."
             highlights={[]}
             title="Đăng ký"
           >

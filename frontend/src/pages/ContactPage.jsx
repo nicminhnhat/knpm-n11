@@ -54,7 +54,7 @@ function ContactPage() {
           <SectionHeader
             eyebrow="Đầu mối hỗ trợ"
             title="Chọn kênh liên hệ phù hợp với nhu cầu của bạn."
-            description="Thông tin hỗ trợ được trình bày ngắn gọn để người dùng dễ liên hệ."
+            description="Thông tin liên hệ được hiển thị rõ để bạn chọn kênh phù hợp."
           />
 
           <div className="grid gap-6 lg:grid-cols-3">
@@ -83,7 +83,7 @@ function ContactPage() {
             <SectionHeader
               eyebrow="Gửi lời nhắn"
               title="Gửi nội dung cần hỗ trợ"
-              description="Nhập thông tin liên hệ và nội dung cần được hỗ trợ."
+              description="Để lại thông tin liên hệ và nội dung, đội ngũ hỗ trợ sẽ phản hồi sớm."
             />
             <form className="mt-8 grid gap-4" onSubmit={handleSubmit}>
               <FormField
@@ -128,13 +128,13 @@ function ContactPage() {
               <div className="rounded-[1.5rem] bg-white p-5 shadow-[0_10px_30px_rgba(22,50,74,0.06)]">
                 <h3 className="text-lg font-bold">Sinh viên có thể lọc phòng theo tiện nghi không?</h3>
                 <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                  Có. Trang danh sách phòng đã được viết lại để lọc theo giá, diện tích và tiện ích.
+                  Có. Bạn có thể lọc theo khu vực, mức giá và tiện ích ngay trên trang danh sách phòng.
                 </p>
               </div>
               <div className="rounded-[1.5rem] bg-white p-5 shadow-[0_10px_30px_rgba(22,50,74,0.06)]">
                 <h3 className="text-lg font-bold">Thông tin phòng có được cập nhật thường xuyên không?</h3>
                 <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                  Có. Thông tin phòng trọ được cập nhật từ hệ thống quản lý dữ liệu.
+                  Có. Tin đăng được chủ trọ cập nhật thường xuyên để bạn theo dõi thông tin mới nhất.
                 </p>
               </div>
             </div>

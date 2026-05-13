@@ -38,17 +38,17 @@ function LoginPage() {
   return (
     <>
       <PageIntro
-        aside={<p>Đăng nhập để quản lý tài khoản, tin nhắn và các thao tác trong hệ thống.</p>}
+        aside={<p>Đăng nhập để tiếp tục nhắn tin với chủ trọ, theo dõi thông báo và quản lý tài khoản.</p>}
         description="Truy cập tài khoản bằng email và mật khẩu đã đăng ký."
         eyebrow="Đăng nhập"
-        title="Đăng nhập hệ thống"
+        title="Đăng nhập tài khoản"
       />
 
       <section className="section-space pt-4">
         <div className="shell max-w-3xl">
           <AuthShell
             badge="Tài khoản"
-            description="Nhập thông tin tài khoản để tiếp tục sử dụng hệ thống."
+            description="Nhập email và mật khẩu để tiếp tục sử dụng các tiện ích của website."
             highlights={[]}
             title="Đăng nhập"
           >
