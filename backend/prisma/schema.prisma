@@ -80,6 +80,7 @@ model User {
   notifications         Notification[]
   accountLogs          AccountLog[]          @relation("AccountUserLogs")
   adminLogs            AccountLog[]          @relation("AccountAdminLogs")
+  passwordResetTokens  PasswordResetToken[]
 }
 
 model Room {
@@ -285,4 +286,21 @@ model AccountLog {
 
   user  User  @relation("AccountUserLogs", fields: [userId], references: [id], onDelete: Cascade)
   admin User? @relation("AccountAdminLogs", fields: [adminId], references: [id], onDelete: SetNull)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  otpHash   String
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([email])
+  @@index([expiresAt])
 }

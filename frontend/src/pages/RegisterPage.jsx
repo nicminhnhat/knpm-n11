@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import AuthShell from "../components/AuthShell.jsx";
 import FormField from "../components/FormField.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 import { Icon } from "../components/Icons.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import PageIntro from "../components/PageIntro.jsx";
@@ -44,7 +45,7 @@ function RegisterPage() {
     <>
       <PageIntro
         aside={<p>Tạo tài khoản để tìm phòng, nhắn tin liên hệ chủ trọ hoặc đăng tin cho thuê.</p>}
-        description="Đăng ký tài khoản sinh viên hoặc chủ trọ để sử dụng đầy đủ chức năng."
+        description="Đăng ký tài khoản sinh viên hoặc chủ trọ để tìm phòng, liên hệ và quản lý thuận tiện."
         eyebrow="Đăng ký"
         title="Tạo tài khoản mới"
       />
@@ -53,7 +54,7 @@ function RegisterPage() {
         <div className="shell max-w-4xl">
           <AuthShell
             badge="Thành viên mới"
-            description="Điền thông tin tài khoản để bắt đầu sử dụng hệ thống."
+            description="Điền thông tin bên dưới để bắt đầu sử dụng website nhanh chóng."
             highlights={[]}
             title="Đăng ký"
           >
@@ -65,10 +66,10 @@ function RegisterPage() {
 
               <label className="grid gap-2 text-sm font-semibold text-[color:var(--ink)] lg:col-span-2">
                 Vai trò
-                <select className="input-shell" value={formData.role} onChange={(event) => setFormData((current) => ({ ...current, role: event.target.value }))}>
+                <CustomSelect value={formData.role} onChange={(event) => setFormData((current) => ({ ...current, role: event.target.value }))}>
                   <option value="STUDENT">Sinh viên</option>
                   <option value="LANDLORD">Chủ trọ</option>
-                </select>
+                </CustomSelect>
               </label>
 
               {errorMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 lg:col-span-2">{errorMessage}</div> : null}

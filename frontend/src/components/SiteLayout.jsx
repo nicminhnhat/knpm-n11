@@ -95,9 +95,9 @@ function ManagementDropdown({ onNavigate, role }) {
   }, []);
 
   return (
-    <div className="relative z-[120]" ref={dropdownRef}>
+    <div className="relative z-[300]" ref={dropdownRef}>
       <button
-        className={`${navClass({ isActive: isDashboard })} flex items-center gap-2 font-semibold`}
+        className={`${navClass({ isActive: isDashboard })} flex items-center gap-2 rounded-full px-2 py-1 font-semibold`}
         onClick={() => setIsOpen((value) => !value)}
         type="button"
       >
@@ -106,9 +106,9 @@ function ManagementDropdown({ onNavigate, role }) {
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-[calc(100%+1.1rem)] z-[999] max-h-[70vh] w-72 overflow-y-auto rounded-[1.5rem] border border-[color:var(--line)] bg-white p-2 text-sm shadow-[0_24px_70px_rgba(22,50,74,0.22)]">
+        <div className="absolute right-0 top-[calc(100%+1rem)] z-[1000] max-h-[70vh] w-80 overflow-y-auto rounded-[1.75rem] border border-[color:var(--line)] bg-white/98 p-3 text-sm shadow-[0_28px_80px_rgba(22,50,74,0.24)] backdrop-blur">
           <NavLink
-            className="mb-1 block rounded-2xl px-4 py-3 font-bold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
+            className="mb-1 block rounded-[1.15rem] px-4 py-3.5 font-extrabold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
             onClick={() => {
               setIsOpen(false);
               onNavigate?.();
@@ -120,7 +120,7 @@ function ManagementDropdown({ onNavigate, role }) {
           {links.map((item) => (
             <NavLink
               key={item.to}
-              className={({ isActive }) => `block rounded-2xl px-4 py-3 font-bold transition ${isActive ? "bg-[color:var(--accent-soft)] text-[color:var(--brand)]" : "text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"}`}
+              className={({ isActive }) => `block rounded-[1.15rem] px-4 py-3.5 font-extrabold transition ${isActive ? "bg-[color:var(--accent-soft)] text-[color:var(--brand)] shadow-[inset_0_0_0_1px_rgba(213,91,54,0.12)]" : "text-[color:var(--ink)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"}`}
               onClick={() => {
                 setIsOpen(false);
                 onNavigate?.();

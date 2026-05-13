@@ -38,17 +38,17 @@ function LoginPage() {
   return (
     <>
       <PageIntro
-        aside={<p>Đăng nhập để quản lý tài khoản, tin nhắn và các thao tác trong hệ thống.</p>}
+        aside={<p>Đăng nhập để tiếp tục nhắn tin với chủ trọ, theo dõi thông báo và quản lý tài khoản.</p>}
         description="Truy cập tài khoản bằng email và mật khẩu đã đăng ký."
         eyebrow="Đăng nhập"
-        title="Đăng nhập hệ thống"
+        title="Đăng nhập tài khoản"
       />
 
       <section className="section-space pt-4">
         <div className="shell max-w-3xl">
           <AuthShell
             badge="Tài khoản"
-            description="Nhập thông tin tài khoản để tiếp tục sử dụng hệ thống."
+            description="Nhập email và mật khẩu để tiếp tục sử dụng các tiện ích của website."
             highlights={[]}
             title="Đăng nhập"
           >
@@ -74,7 +74,7 @@ function LoginPage() {
               />
 
               <div className="flex justify-end text-sm text-[color:var(--muted)]">
-                <Link className="font-semibold text-[color:var(--brand)]" to="/contact">Quên mật khẩu?</Link>
+                <Link className="font-semibold text-[color:var(--brand)]" to="/forgot-password">Quên mật khẩu?</Link>
               </div>
 
               {errorMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div> : null}

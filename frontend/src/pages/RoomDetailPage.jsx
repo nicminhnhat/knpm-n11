@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import CustomSelect from "../components/CustomSelect.jsx";
 import FeedbackModal from "../components/FeedbackModal.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -38,6 +39,7 @@ function RoomDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: "" });
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const reportReasons = ["Thông tin không chính xác", "Phòng trọ không tồn tại", "Giá thuê sai so với thực tế", "Hình ảnh không đúng thực tế", "Có dấu hiệu lừa đảo", "Nội dung không phù hợp", "Chủ trọ không phản hồi", "Lý do khác"];
   const [reportForm, setReportForm] = useState({ reason: "", content: "" });
   const [isOpeningChat, setIsOpeningChat] = useState(false);
@@ -83,8 +85,8 @@ function RoomDetailPage() {
       const response = await authRequest("/api/messages/threads", {
         method: "POST",
         body: JSON.stringify({
-          landlordId: item.landlordId,
-          roomId: item.id,
+          landlordId: normalizeRoom(room)?.landlordId,
+          roomId: normalizeRoom(room)?.id,
           postId: approvedPost?.id,
           content: "Xin chào, em muốn hỏi thêm thông tin về phòng trọ này."
         })
@@ -99,6 +101,12 @@ function RoomDetailPage() {
 
   const item = normalizeRoom(room);
   const imageList = item?.images?.length ? item.images : item ? [{ url: roomImage(item), alt: item.title }] : [];
+  const activeImage = imageList[activeImageIndex] || imageList[0];
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [id, imageList.length]);
+
   const mapQuery = item ? `${item.address || ""} ${item.district || ""} Huế`.trim() : "Huế";
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
 
@@ -153,8 +161,8 @@ function RoomDetailPage() {
       ) : null}
       {feedback.modal}
       <PageIntro
-        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">Thông tin phòng trọ</p><p className="mt-2">Theo dõi giá thuê, tiện ích, đánh giá và liên hệ chủ trọ.</p></div>}
-        description="Xem hình ảnh, giá thuê, diện tích, tiện ích, thông tin chủ trọ, đánh giá và báo cáo vi phạm."
+        aside={<div className="text-left"><p className="text-lg font-bold text-[color:var(--ink)]">Thông tin phòng trọ</p><p className="mt-2">Xem nhanh giá thuê, tiện ích và liên hệ chủ trọ khi phòng phù hợp.</p></div>}
+        description="Xem hình ảnh thực tế, giá thuê, diện tích, địa chỉ, tiện ích và thông tin liên hệ trước khi quyết định."
         eyebrow="Chi tiết phòng trọ"
         title={isLoading ? "Đang tải thông tin phòng..." : item?.title || "Không tìm thấy phòng"}
       />
@@ -167,11 +175,43 @@ function RoomDetailPage() {
             <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="space-y-6">
                 <div className="panel overflow-hidden">
-                  <img alt={imageList[0]?.alt || item.title} className="h-[420px] w-full object-cover" src={imageList[0]?.url || roomImage(item)} />
+                  <div className="relative">
+                    <img alt={activeImage?.alt || item.title} className="h-[420px] w-full object-cover" src={activeImage?.url || roomImage(item)} />
+                    {imageList.length > 1 ? (
+                      <>
+                        <button
+                          aria-label="Ảnh trước"
+                          className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl font-bold text-[color:var(--ink)] shadow-[0_14px_35px_rgba(22,50,74,0.18)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
+                          type="button"
+                          onClick={() => setActiveImageIndex((current) => (current - 1 + imageList.length) % imageList.length)}
+                        >
+                          ‹
+                        </button>
+                        <button
+                          aria-label="Ảnh tiếp theo"
+                          className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl font-bold text-[color:var(--ink)] shadow-[0_14px_35px_rgba(22,50,74,0.18)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--brand)]"
+                          type="button"
+                          onClick={() => setActiveImageIndex((current) => (current + 1) % imageList.length)}
+                        >
+                          ›
+                        </button>
+                        <div className="absolute bottom-4 left-1/2 rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold text-[color:var(--ink)] shadow-[0_10px_25px_rgba(22,50,74,0.16)]">
+                          {activeImageIndex + 1}/{imageList.length}
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
                   {imageList.length > 1 ? (
-                    <div className="grid gap-3 p-4 sm:grid-cols-3">
-                      {imageList.slice(1, 4).map((image, index) => (
-                        <img key={`${image.url}-${index}`} alt={image.alt || item.title} className="h-28 w-full rounded-2xl object-cover" src={image.url} />
+                    <div className="flex gap-3 overflow-x-auto p-4">
+                      {imageList.map((image, index) => (
+                        <button
+                          className={`h-24 w-32 shrink-0 overflow-hidden rounded-2xl border-2 transition ${activeImageIndex === index ? "border-[color:var(--brand)] shadow-[0_10px_25px_rgba(213,91,54,0.2)]" : "border-transparent opacity-75 hover:opacity-100"}`}
+                          key={`${image.url}-${index}`}
+                          type="button"
+                          onClick={() => setActiveImageIndex(index)}
+                        >
+                          <img alt={image.alt || item.title} className="h-full w-full object-cover" src={image.url} />
+                        </button>
                       ))}
                     </div>
                   ) : null}
@@ -245,9 +285,9 @@ function RoomDetailPage() {
                       loadRoom
                     );
                   }}>
-                    <select className="input-shell" value={reviewForm.rating} onChange={(e) => setReviewForm((v) => ({ ...v, rating: Number(e.target.value) }))}>
-                      {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} sao</option>)}
-                    </select>
+                    <CustomSelect value={String(reviewForm.rating)} onChange={(e) => setReviewForm((v) => ({ ...v, rating: Number(e.target.value) }))}>
+                      {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={String(rating)}>{rating} sao</option>)}
+                    </CustomSelect>
                     <textarea className="input-shell min-h-28" placeholder="Viết đánh giá của bạn" value={reviewForm.content} onChange={(e) => setReviewForm((v) => ({ ...v, content: e.target.value }))} />
                     <button className="button-primary w-fit" type="submit">Gửi đánh giá</button>
                   </form>
@@ -293,11 +333,13 @@ function RoomDetailPage() {
                       "Gửi"
                     );
                   }}>
-                    <select className="input-shell" value={reportForm.reason} onChange={(e) => setReportForm((v) => ({ ...v, reason: e.target.value }))}>
-                      <option value="">Chọn lý do báo cáo</option>
-                      {reportReasons.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
-                    </select>
-                    <textarea className="input-shell min-h-32" placeholder="Mô tả chi tiết vi phạm" value={reportForm.content} onChange={(e) => setReportForm((v) => ({ ...v, content: e.target.value }))} />
+                    <CustomSelect
+                      options={reportReasons.map((reason) => ({ label: reason, value: reason }))}
+                      placeholder="Chọn lý do báo cáo"
+                      value={reportForm.reason}
+                      onChange={(e) => setReportForm((v) => ({ ...v, reason: e.target.value }))}
+                    />
+                    <textarea className="input-shell min-h-32 resize-y leading-7" placeholder="Mô tả chi tiết vi phạm" value={reportForm.content} onChange={(e) => setReportForm((v) => ({ ...v, content: e.target.value }))} />
                     <button className="button-secondary justify-center" type="submit">Gửi báo cáo</button>
                   </form>
                 </div>

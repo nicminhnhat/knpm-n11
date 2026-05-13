@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import CustomSelect from "../components/CustomSelect.jsx";
 import PageIntro from "../components/PageIntro.jsx";
 import RoomCard from "../components/RoomCard.jsx";
 import SectionHeader from "../components/SectionHeader.jsx";
@@ -77,8 +78,8 @@ function RoomsPage() {
   return (
     <>
       <PageIntro
-        aside={<p>Danh sách phòng trọ được cập nhật từ hệ thống dữ liệu.</p>}
-        description="Tìm kiếm phòng trọ theo từ khóa, khu vực, giá thuê, loại phòng và tiện ích. Chỉ các bài đăng đã được admin duyệt mới hiển thị công khai."
+        aside={<p>Lọc nhanh theo nhu cầu và xem thông tin rõ ràng trước khi liên hệ chủ trọ.</p>}
+        description="Lọc phòng theo từ khóa, khu vực, giá thuê, loại phòng và tiện ích để chọn nơi ở phù hợp. Các tin đăng hiển thị công khai đều đã được kiểm duyệt."
         eyebrow="Danh sách phòng"
         title="Tìm phòng trọ phù hợp với nhu cầu của bạn."
       />
@@ -91,14 +92,14 @@ function RoomsPage() {
               <input className="input-shell" placeholder="Giá từ (triệu)" type="number" min="0" step="any" onKeyDown={(e) => e.key === "-" && e.preventDefault()} value={filters.minPrice} onChange={(e) => updateFilter("minPrice", e.target.value)} />
               <input className="input-shell" placeholder="Giá đến (triệu)" type="number" min="0" step="any" onKeyDown={(e) => e.key === "-" && e.preventDefault()} value={filters.maxPrice} onChange={(e) => updateFilter("maxPrice", e.target.value)} />
               <input className="input-shell" placeholder="Khu vực" value={filters.district} onChange={(e) => updateFilter("district", e.target.value)} />
-              <select className="input-shell" value={filters.type} onChange={(e) => updateFilter("type", e.target.value)}>
+              <CustomSelect value={filters.type} onChange={(e) => updateFilter("type", e.target.value)} placeholder="Tất cả loại phòng">
                 <option value="">Tất cả loại phòng</option>
                 <option value="SINGLE">Phòng đơn</option>
                 <option value="SHARED">Ở ghép</option>
                 <option value="DORM">Ký túc xá</option>
                 <option value="APARTMENT">Căn hộ</option>
                 <option value="OTHER">Khác</option>
-              </select>
+              </CustomSelect>
               <button className="button-secondary" type="button" onClick={() => setFilters({ q: "", minPrice: "", maxPrice: "", district: "", type: "", amenities: [] })}>
                 Xóa bộ lọc
               </button>
@@ -120,7 +121,7 @@ function RoomsPage() {
           <SectionHeader
             eyebrow="Kết quả"
             title={isLoading ? "Đang tải phòng trọ..." : `${pagination?.total ?? rooms.length} phòng đang hiển thị`}
-            description="Danh sách hiển thị các phòng đang được công khai trên hệ thống."
+            description="Danh sách các phòng đang mở cho thuê để bạn tiện so sánh và liên hệ ngay."
           />
 
           {errorMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div> : null}

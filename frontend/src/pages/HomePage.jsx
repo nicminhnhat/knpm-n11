@@ -33,10 +33,6 @@ function HomePage() {
                 <h1 className="page-title max-w-3xl">
                   Tìm phòng trọ rõ ràng hơn, nhanh hơn và bớt mệt hơn.
                 </h1>
-                <p className="page-copy max-w-2xl">
-                  Lấy cảm hứng từ bộ template gốc, phiên bản React này tập trung vào trải nghiệm
-                  lọc phòng, liên hệ chủ trọ và giới thiệu phòng nổi bật theo cách gọn gàng hơn.
-                </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link className="button-primary" to="/rooms">
@@ -65,7 +61,7 @@ function HomePage() {
                   </p>
                 </div>
                 <div className="pill-tag bg-[color:var(--accent-soft)] text-[color:var(--brand)]">
-                  Responsive trên mobile và desktop
+                  Dùng mượt trên điện thoại và máy tính
                 </div>
               </div>
             </div>
@@ -136,7 +132,7 @@ function HomePage() {
               <SectionHeader
                 eyebrow="Tại sao chọn Trọ Sinh Viên Huế"
                 title="Tìm phòng nhanh hơn, thông tin rõ ràng hơn."
-                description="Các thông tin quan trọng được trình bày rõ ràng để sinh viên dễ theo dõi và ra quyết định."
+                description="Giá thuê, khu vực, tiện ích và cách liên hệ được hiển thị rõ để bạn chọn phòng nhanh hơn."
               />
               <div className="grid gap-5 sm:grid-cols-2">
                 {homeFeatures.map((feature) => (
@@ -162,7 +158,7 @@ function HomePage() {
                 Xem tất cả
               </Link>
             }
-            description="Các phòng nổi bật được cập nhật từ hệ thống và sắp xếp để người dùng dễ tham khảo."
+            description="Khám phá những phòng trọ được quan tâm nhiều, giúp bạn có thêm lựa chọn phù hợp."
             eyebrow="Phòng nổi bật"
             title="Một vài phòng đang được xem nhiều"
           />

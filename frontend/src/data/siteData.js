@@ -35,7 +35,7 @@ export const homeFeatures = [
   {
     icon: "shield",
     title: "Minh bạch hơn",
-    description: "Mỗi tin đăng được trình bày nhất quán để người thuê dễ so sánh và đánh giá độ phù hợp."
+    description: "Mỗi tin đăng hiển thị rõ thông tin quan trọng để bạn dễ so sánh và chọn phòng phù hợp."
   }
 ];
 
@@ -146,9 +146,9 @@ export const aboutValues = [
 ];
 
 export const rentBenefits = [
-  "Biểu mẫu đăng tin có cấu trúc rõ ràng, tránh thiếu thông tin quan trọng.",
-  "Khu vực nổi bật giúp tăng tỷ lệ được xem ở các phòng có hình ảnh tốt.",
-  "Cách trình bày nhất quán giúp người thuê so sánh dễ và ra quyết định nhanh hơn."
+  "Điền thông tin theo từng bước rõ ràng để hạn chế thiếu sót khi đăng tin.",
+  "Phòng có hình ảnh đẹp và thông tin đầy đủ sẽ dễ được sinh viên quan tâm hơn.",
+  "Nội dung đăng tin nhất quán giúp người thuê so sánh nhanh và quyết định dễ hơn."
 ];
 
 export const contactCards = [
